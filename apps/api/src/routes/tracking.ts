@@ -13,7 +13,6 @@ import { intakeLogsTable, trackedNutrientsTable } from "../db/schema";
 export async function trackingRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
 
-  // get all tracked nutrients for a user
   base.get(
     "/:userId/nutrients",
     { schema: { params: userIdParamsSchema } },
@@ -26,7 +25,6 @@ export async function trackingRoutes(app: FastifyInstance) {
     },
   );
 
-  // add a tracked nutrient
   base.post(
     "/:userId/nutrients",
     {
@@ -35,16 +33,15 @@ export async function trackingRoutes(app: FastifyInstance) {
         body: trackedNutrientSchema,
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const [created] = await db
         .insert(trackedNutrientsTable)
         .values({ userId: req.params.userId, ...req.body })
         .returning();
-      return created;
+      return reply.code(201).send(created);
     },
   );
 
-  // update a tracked nutrient's target
   base.put(
     "/:userId/nutrients/:nutrientId",
     {
@@ -63,7 +60,6 @@ export async function trackingRoutes(app: FastifyInstance) {
     },
   );
 
-  // remove a tracked nutrient
   base.delete(
     "/:userId/nutrients/:nutrientId",
     {
@@ -71,34 +67,32 @@ export async function trackingRoutes(app: FastifyInstance) {
         params: userIdParamsSchema.extend({ nutrientId: z.uuid() }),
       },
     },
-    async (req) => {
+    async (req, reply) => {
       await db
         .delete(trackedNutrientsTable)
         .where(eq(trackedNutrientsTable.id, req.params.nutrientId));
-      return { ok: true };
+      return reply.code(204).send();
     },
   );
 
-  // log intake for a tracked nutrient
   base.post(
-    "/:userId/log",
+    "/:userId/logs",
     {
       schema: {
         params: userIdParamsSchema,
         body: intakeLogSchema,
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const [created] = await db
         .insert(intakeLogsTable)
         .values({ userId: req.params.userId, ...req.body })
         .returning();
 
-      return created;
+      return reply.code(201).send(created);
     },
   );
 
-  // daily summary, consisting of how much of a nutrient is tracked vs the target
   base.get(
     "/:userId/daily",
     {
@@ -152,19 +146,18 @@ export async function trackingRoutes(app: FastifyInstance) {
     },
   );
 
-  // delete a specific intake log
   base.delete(
-    "/:userId/log/:logId",
+    "/:userId/logs/:logId",
     {
       schema: {
         params: userIdParamsSchema.extend({ logId: z.uuid() }),
       },
     },
-    async (req) => {
+    async (req, reply) => {
       await db
         .delete(intakeLogsTable)
         .where(eq(intakeLogsTable.id, req.params.logId));
-      return { ok: true };
+      return reply.code(204).send();
     },
   );
 }

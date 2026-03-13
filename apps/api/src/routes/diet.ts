@@ -13,7 +13,6 @@ import { deficienciesTable, dietaryProfilesTable } from "../db/schema";
 export async function dietRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
 
-  // get dietary profile and deficiencies
   base.get(
     "/:userId",
     { schema: { params: userIdParamsSchema } },
@@ -35,7 +34,6 @@ export async function dietRoutes(app: FastifyInstance) {
     },
   );
 
-  // update dietary profile
   base.put(
     "/:userId/profile",
     {
@@ -67,7 +65,6 @@ export async function dietRoutes(app: FastifyInstance) {
     },
   );
 
-  // set new deficiencies
   base.put(
     "/:userId/deficiencies",
     {
@@ -93,7 +90,6 @@ export async function dietRoutes(app: FastifyInstance) {
     },
   );
 
-  // add one deficiency
   base.post(
     "/:userId/deficiencies",
     {
@@ -102,16 +98,15 @@ export async function dietRoutes(app: FastifyInstance) {
         body: deficiencySchema,
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const [inserted] = await db
         .insert(deficienciesTable)
         .values({ userId: req.params.userId, ...req.body })
         .returning();
-      return inserted;
+      return reply.code(201).send(inserted);
     },
   );
 
-  // delete deficiency
   base.delete(
     "/:userId/deficiencies/:deficiencyId",
     {
@@ -121,11 +116,11 @@ export async function dietRoutes(app: FastifyInstance) {
         }),
       },
     },
-    async (req) => {
+    async (req, reply) => {
       await db
         .delete(deficienciesTable)
         .where(eq(deficienciesTable.id, req.params.deficiencyId));
-      return { ok: true };
+      return reply.code(204).send();
     },
   );
 }

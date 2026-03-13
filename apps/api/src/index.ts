@@ -17,8 +17,8 @@ app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
 app.register(authRoutes, { prefix: "/auth" });
-app.register(dietRoutes, { prefix: "/diet" });
-app.register(pantryRoutes, { prefix: "/pantry" });
+app.register(dietRoutes, { prefix: "/diets" });
+app.register(pantryRoutes, { prefix: "/pantries" });
 app.register(suggestionsRoutes, { prefix: "/suggestions" });
 app.register(trackingRoutes, { prefix: "/tracking" });
 

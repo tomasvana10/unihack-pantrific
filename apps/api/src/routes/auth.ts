@@ -16,7 +16,7 @@ export async function authRoutes(app: FastifyInstance) {
   base.post(
     "/register",
     { schema: { body: signUpSchema } },
-    async (req, _reply) => {
+    async (req, reply) => {
       const { username, password } = req.body;
       const passwordHash = await bcrypt.hash(password, 10);
       const token = generateToken();
@@ -29,7 +29,7 @@ export async function authRoutes(app: FastifyInstance) {
           token: userTable.token,
         });
 
-      return user;
+      return reply.code(201).send(user);
     },
   );
 

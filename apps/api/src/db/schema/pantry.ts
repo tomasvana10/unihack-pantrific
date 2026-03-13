@@ -7,6 +7,14 @@ export const pantryTable = pgTable("pantry", {
     .references(() => userTable.id, { onDelete: "cascade" })
     .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+});
+
+export const pantryItemTable = pgTable("pantry_item", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  pantryId: uuid("pantry_id")
+    .references(() => pantryTable.id, { onDelete: "cascade" })
+    .notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
   confidence: real("confidence"),
   detectedAt: timestamp("detected_at").defaultNow().notNull(),
 });
