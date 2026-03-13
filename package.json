@@ -1,0 +1,16 @@
+{
+  "name": "pantrific",
+  "version": "0.1.0",
+  "scripts": {
+    "typecheck": "pnpm -r exec tsc -b && pnpm -r exec tsc --noEmit",
+    "lint": "biome check",
+    "format": "biome format --write",
+    "api": "pnpm --filter @pantrific/api dev",
+    "mobile": "pnpm --filter @pantrific/mobile start",
+    "prepare": "[ -d .git ] && lefthook install || echo \"no lefthook\""
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "lefthook": "^2.1.4"
+  }
+}

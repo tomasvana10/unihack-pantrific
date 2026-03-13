@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true
+  },
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/schema" }
+  ]
+}

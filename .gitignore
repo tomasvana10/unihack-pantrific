@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.local
+*.db
+__pycache__/
+.DS_Store
+.venv/
+*.egg-info/
+.expo/
+android/

@@ -1,0 +1,16 @@
+name: pantrificdb
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: pantrific
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
