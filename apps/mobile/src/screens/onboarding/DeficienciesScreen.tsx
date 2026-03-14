@@ -1,4 +1,8 @@
-import { COMMON_DEFICIENCIES } from "@pantrific/schema";
+import {
+  COMMON_DEFICIENCIES,
+  SEVERITIES,
+  type Severity,
+} from "@pantrific/schema";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
@@ -14,9 +18,7 @@ import type { OnboardingStackParams } from "../../types/navigation";
 
 type Props = NativeStackScreenProps<OnboardingStackParams, "Deficiencies">;
 
-const SEVERITY_OPTIONS = ["low", "moderate", "high"] as const;
-
-type Entry = { nutrient: string; severity: (typeof SEVERITY_OPTIONS)[number] };
+type Entry = { nutrient: string; severity: Severity };
 
 export default function DeficienciesScreen({ navigation, route }: Props) {
   const { userId } = route.params;
@@ -34,7 +36,7 @@ export default function DeficienciesScreen({ navigation, route }: Props) {
 
   const setSeverity = (
     nutrient: string,
-    severity: (typeof SEVERITY_OPTIONS)[number],
+    severity: (typeof SEVERITIES)[number],
   ) => {
     setEntries((prev) =>
       prev.map((e) => (e.nutrient === nutrient ? { ...e, severity } : e)),
@@ -100,7 +102,7 @@ export default function DeficienciesScreen({ navigation, route }: Props) {
                 {entry.nutrient}
               </Text>
               <View style={tw`flex-row gap-2`}>
-                {SEVERITY_OPTIONS.map((s) => (
+                {SEVERITIES.map((s) => (
                   <TouchableOpacity
                     key={s}
                     onPress={() => setSeverity(entry.nutrient, s)}

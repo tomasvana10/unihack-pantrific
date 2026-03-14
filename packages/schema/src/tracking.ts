@@ -6,11 +6,7 @@ export const trackedNutrientSchema = z.object({
   dailyTarget: z.number().positive(),
 });
 
-export type TrackedNutrientInput = z.infer<typeof trackedNutrientSchema>;
-
 export const intakeLogSchema = z.object({
   trackedNutrientId: z.uuid(),
   amount: z.number().positive(),
 });
-
-export type IntakeLogInput = z.infer<typeof intakeLogSchema>;

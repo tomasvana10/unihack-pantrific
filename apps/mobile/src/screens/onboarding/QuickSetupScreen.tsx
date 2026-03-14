@@ -1,3 +1,4 @@
+import { GENDERS, type Gender } from "@pantrific/schema";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
@@ -16,11 +17,9 @@ import type { OnboardingStackParams } from "../../types/navigation";
 
 type Props = NativeStackScreenProps<OnboardingStackParams, "QuickSetup">;
 
-type Gender = "male" | "female";
-
 export default function QuickSetupScreen({ navigation, route }: Props) {
   const { userId } = route.params;
-  const [gender, setGender] = useState<Gender | null>(null);
+  const [gender, setGender] = useState<Gender>();
   const [age, setAge] = useState("");
   const [weight, setWeight] = useState("");
   const [error, setError] = useState("");
@@ -60,7 +59,7 @@ export default function QuickSetupScreen({ navigation, route }: Props) {
 
         <Text style={tw`text-base text-brown-light mb-3`}>Gender</Text>
         <View style={tw`flex-row gap-3 mb-6`}>
-          {(["male", "female"] as const).map((g) => (
+          {GENDERS.map((g) => (
             <TouchableOpacity
               key={g}
               onPress={() => setGender(g)}

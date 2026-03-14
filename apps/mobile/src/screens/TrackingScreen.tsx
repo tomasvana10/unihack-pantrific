@@ -33,7 +33,7 @@ export default function TrackingScreen({ route }: Props) {
   const { data: history } = useTrackingHistory(userId, 7);
   const logIntake = useLogIntake(userId);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [selectedNutrient, setSelectedNutrient] = useState<string | null>(null);
+  const [selectedNutrient, setSelectedNutrient] = useState<string>();
 
   const handleLog = async (nutrientId: string) => {
     const val = Number(amounts[nutrientId]);

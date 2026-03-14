@@ -10,6 +10,28 @@ import { z } from "zod";
 import { db } from "../db";
 import { intakeLogsTable, trackedNutrientsTable } from "../db/schema";
 
+async function getDayTotals(userId: string, date: string) {
+  const dayStart = new Date(`${date}T00:00:00`);
+  const dayEnd = new Date(`${date}T23:59:59.999`);
+
+  const totals = await db
+    .select({
+      trackedNutrientId: intakeLogsTable.trackedNutrientId,
+      total: sql<number>`coalesce(sum(${intakeLogsTable.amount}), 0)`,
+    })
+    .from(intakeLogsTable)
+    .where(
+      and(
+        eq(intakeLogsTable.userId, userId),
+        gte(intakeLogsTable.loggedAt, dayStart),
+        lt(intakeLogsTable.loggedAt, dayEnd),
+      ),
+    )
+    .groupBy(intakeLogsTable.trackedNutrientId);
+
+  return new Map(totals.map((t) => [t.trackedNutrientId, t.total]));
+}
+
 export async function trackingRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
 
@@ -107,40 +129,22 @@ export async function trackingRoutes(app: FastifyInstance) {
       },
     },
     async (req) => {
-      const date = req.query.date ?? new Date().toISOString().split("T")[0];
-      const dayStart = new Date(`${date}T00:00:00`);
-      const dayEnd = new Date(`${date}T23:59:59.999`);
+      const date = req.query.date ?? new Date().toISOString().split("T")[0]!;
 
-      const nutrients = await db
-        .select()
-        .from(trackedNutrientsTable)
-        .where(eq(trackedNutrientsTable.userId, req.params.userId));
-
-      const totals = await db
-        .select({
-          trackedNutrientId: intakeLogsTable.trackedNutrientId,
-          total: sql<number>`coalesce(sum(${intakeLogsTable.amount}), 0)`,
-        })
-        .from(intakeLogsTable)
-        .where(
-          and(
-            eq(intakeLogsTable.userId, req.params.userId),
-            gte(intakeLogsTable.loggedAt, dayStart),
-            lt(intakeLogsTable.loggedAt, dayEnd),
-          ),
-        )
-        .groupBy(intakeLogsTable.trackedNutrientId);
-
-      const nutrientToTotal = new Map(
-        totals.map((t) => [t.trackedNutrientId, t.total]),
-      );
+      const [nutrients, totals] = await Promise.all([
+        db
+          .select()
+          .from(trackedNutrientsTable)
+          .where(eq(trackedNutrientsTable.userId, req.params.userId)),
+        getDayTotals(req.params.userId, date),
+      ]);
 
       return {
         date,
         nutrients: nutrients.map((n) => ({
           ...n,
-          consumed: nutrientToTotal.get(n.id) ?? 0,
-          remaining: n.dailyTarget - (nutrientToTotal.get(n.id) ?? 0),
+          consumed: totals.get(n.id) ?? 0,
+          remaining: n.dailyTarget - (totals.get(n.id) ?? 0),
         })),
       };
     },
@@ -170,27 +174,7 @@ export async function trackingRoutes(app: FastifyInstance) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split("T")[0]!;
-        const dayStart = new Date(`${dateStr}T00:00:00`);
-        const dayEnd = new Date(`${dateStr}T23:59:59.999`);
-
-        const totals = await db
-          .select({
-            trackedNutrientId: intakeLogsTable.trackedNutrientId,
-            total: sql<number>`coalesce(sum(${intakeLogsTable.amount}), 0)`,
-          })
-          .from(intakeLogsTable)
-          .where(
-            and(
-              eq(intakeLogsTable.userId, userId),
-              gte(intakeLogsTable.loggedAt, dayStart),
-              lt(intakeLogsTable.loggedAt, dayEnd),
-            ),
-          )
-          .groupBy(intakeLogsTable.trackedNutrientId);
-
-        const totalMap = new Map(
-          totals.map((t) => [t.trackedNutrientId, t.total]),
-        );
+        const totals = await getDayTotals(userId, dateStr);
 
         history.push({
           date: dateStr,
@@ -199,7 +183,7 @@ export async function trackingRoutes(app: FastifyInstance) {
             name: n.name,
             unit: n.unit,
             dailyTarget: n.dailyTarget,
-            consumed: totalMap.get(n.id) ?? 0,
+            consumed: totals.get(n.id) ?? 0,
           })),
         });
       }

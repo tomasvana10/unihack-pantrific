@@ -1,7 +1,7 @@
-import { CUISINE_NAMES } from "@pantrific/schema";
+import { CUISINES, DIET_TYPES } from "@pantrific/schema";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import * as SecureStore from "expo-secure-store";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,20 +16,18 @@ import type { TabParams } from "../types/navigation";
 
 type Props = BottomTabScreenProps<TabParams, "Account">;
 
-const DIET_OPTIONS = [
-  { value: "none", label: "No Restriction" },
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "vegan", label: "Vegan" },
-] as const;
-
 export default function AccountScreen({ route }: Props) {
   const { userId } = route.params;
   const { data, isLoading } = useDietProfile(userId);
   const updateProfile = useUpdateProfile(userId);
   const logout = useLogout();
-  const [username, setUsername] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>();
 
-  SecureStore.getItemAsync("username").then(setUsername);
+  useEffect(() => {
+    SecureStore.getItemAsync("username").then((v) =>
+      setUsername(v ?? undefined),
+    );
+  }, []);
 
   if (isLoading) {
     return (
@@ -71,7 +69,6 @@ export default function AccountScreen({ route }: Props) {
         <Text style={tw`text-base text-brown-light mb-6`}>@{username}</Text>
       )}
 
-      {/* Demographics */}
       {(profile?.gender || profile?.age || profile?.weight) && (
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
@@ -109,36 +106,34 @@ export default function AccountScreen({ route }: Props) {
         </View>
       )}
 
-      {/* Diet Type */}
       <View style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
         <Text style={tw`text-base font-semibold text-brown mb-3`}>
           Diet Type
         </Text>
         <View style={tw`flex-row gap-2`}>
-          {DIET_OPTIONS.map((opt) => (
+          {DIET_TYPES.map((value) => (
             <TouchableOpacity
-              key={opt.value}
-              onPress={() => handleDietType(opt.value)}
+              key={value}
+              onPress={() => handleDietType(value)}
               style={tw`flex-1 rounded-xl py-3 items-center ${
-                (profile?.dietType ?? "none") === opt.value
+                (profile?.dietType ?? "none") === value
                   ? "bg-yellow"
                   : "bg-gray-light"
               }`}>
-              <Text style={tw`text-brown text-sm font-medium`}>
-                {opt.label}
+              <Text style={tw`text-brown text-sm font-medium capitalize`}>
+                {value === "none" ? "None" : value}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Cuisine Preferences */}
       <View style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
         <Text style={tw`text-base font-semibold text-brown mb-3`}>
           Preferred Cuisines
         </Text>
         <View style={tw`flex-row flex-wrap gap-2`}>
-          {CUISINE_NAMES.map((c) => (
+          {CUISINES.map((c) => (
             <TouchableOpacity
               key={c}
               onPress={() => toggleCuisine(c)}
@@ -153,7 +148,6 @@ export default function AccountScreen({ route }: Props) {
         </View>
       </View>
 
-      {/* Nutrition Targets */}
       {(profile?.calorieTarget || profile?.proteinTarget) && (
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
@@ -179,7 +173,6 @@ export default function AccountScreen({ route }: Props) {
         </View>
       )}
 
-      {/* Sign Out */}
       <TouchableOpacity
         style={tw`rounded-full py-4 items-center border border-red mb-10 mt-4`}
         onPress={handleLogout}>

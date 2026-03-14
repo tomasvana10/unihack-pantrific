@@ -1,3 +1,4 @@
+import { DIET_TYPES, type DietType } from "@pantrific/schema";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
@@ -7,30 +8,18 @@ import type { OnboardingStackParams } from "../../types/navigation";
 
 type Props = NativeStackScreenProps<OnboardingStackParams, "DietType">;
 
-const DIET_OPTIONS = [
-  {
-    value: "none",
-    label: "No Restriction",
-    desc: "I eat everything",
-    emoji: "🍖",
-  },
-  {
-    value: "vegetarian",
-    label: "Vegetarian",
-    desc: "No meat or fish",
-    emoji: "🥚",
-  },
-  {
-    value: "vegan",
-    label: "Vegan",
-    desc: "No animal products",
-    emoji: "🌱",
-  },
-] as const;
+const DIET_LABELS: Record<
+  DietType,
+  { label: string; desc: string; emoji: string }
+> = {
+  none: { label: "No Restriction", desc: "I eat everything", emoji: "🍖" },
+  vegetarian: { label: "Vegetarian", desc: "No meat or fish", emoji: "🥚" },
+  vegan: { label: "Vegan", desc: "No animal products", emoji: "🌱" },
+};
 
 export default function DietTypeScreen({ navigation, route }: Props) {
   const { userId } = route.params;
-  const [selected, setSelected] = useState<string>("none");
+  const [selected, setSelected] = useState<DietType>("none");
   const updateProfile = useUpdateProfile(userId);
 
   const handleContinue = async () => {
@@ -49,27 +38,30 @@ export default function DietTypeScreen({ navigation, route }: Props) {
         Do you have any dietary restrictions?
       </Text>
 
-      {DIET_OPTIONS.map((opt) => (
-        <TouchableOpacity
-          key={opt.value}
-          onPress={() => setSelected(opt.value)}
-          style={tw`flex-row items-center rounded-2xl px-5 py-4 mb-3 ${
-            selected === opt.value
-              ? "bg-yellow"
-              : "bg-white border border-cream-dark"
-          }`}>
-          <Text style={tw`text-2xl mr-4`}>{opt.emoji}</Text>
-          <View style={tw`flex-1`}>
-            <Text style={tw`text-brown font-semibold text-base`}>
-              {opt.label}
-            </Text>
-            <Text style={tw`text-brown-light text-sm`}>{opt.desc}</Text>
-          </View>
-          {selected === opt.value && (
-            <Text style={tw`text-brown text-lg`}>✓</Text>
-          )}
-        </TouchableOpacity>
-      ))}
+      {DIET_TYPES.map((value) => {
+        const { label, desc, emoji } = DIET_LABELS[value];
+        return (
+          <TouchableOpacity
+            key={value}
+            onPress={() => setSelected(value)}
+            style={tw`flex-row items-center rounded-2xl px-5 py-4 mb-3 ${
+              selected === value
+                ? "bg-yellow"
+                : "bg-white border border-cream-dark"
+            }`}>
+            <Text style={tw`text-2xl mr-4`}>{emoji}</Text>
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-brown font-semibold text-base`}>
+                {label}
+              </Text>
+              <Text style={tw`text-brown-light text-sm`}>{desc}</Text>
+            </View>
+            {selected === value && (
+              <Text style={tw`text-brown text-lg`}>✓</Text>
+            )}
+          </TouchableOpacity>
+        );
+      })}
 
       <TouchableOpacity
         style={tw`mt-8 rounded-full py-4 items-center bg-yellow`}

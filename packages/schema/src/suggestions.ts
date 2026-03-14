@@ -24,9 +24,3 @@ export const aiMealSuggestionSchema = mealSuggestionSchema
 export const aiSuggestionsResponseSchema = z.object({
   meals: z.array(aiMealSuggestionSchema),
 });
-
-export const suggestionsResponseSchema = z.object({
-  meals: z.array(mealSuggestionSchema),
-});
-
-export type SuggestionsResponse = z.infer<typeof suggestionsResponseSchema>;

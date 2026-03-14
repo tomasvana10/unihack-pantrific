@@ -70,18 +70,21 @@ export default function GoalsScreen({ navigation, route }: Props) {
 
   const handleContinue = async () => {
     setSaving(true);
-    const enabled = nutrients.filter(
-      (n) => n.enabled && Number(n.dailyTarget) > 0,
-    );
-    for (const n of enabled) {
-      await createNutrient.mutateAsync({
-        name: n.name,
-        unit: n.unit,
-        dailyTarget: Number(n.dailyTarget),
-      });
+    try {
+      const enabled = nutrients.filter(
+        (n) => n.enabled && Number(n.dailyTarget) > 0,
+      );
+      for (const n of enabled) {
+        await createNutrient.mutateAsync({
+          name: n.name,
+          unit: n.unit,
+          dailyTarget: Number(n.dailyTarget),
+        });
+      }
+      navigation.navigate("Deficiencies", { userId });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
-    navigation.navigate("Deficiencies", { userId });
   };
 
   return (

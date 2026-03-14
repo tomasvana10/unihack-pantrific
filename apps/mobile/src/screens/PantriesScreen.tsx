@@ -27,7 +27,7 @@ export default function PantriesScreen({ route }: Props) {
   const createPantry = useCreatePantry(userId);
   const deletePantry = useDeletePantry(userId);
   const [newName, setNewName] = useState("");
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string>();
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
@@ -81,7 +81,9 @@ export default function PantriesScreen({ route }: Props) {
             pantry={item}
             userId={userId}
             isExpanded={expanded === item.id}
-            onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
+            onToggle={() =>
+              setExpanded(expanded === item.id ? undefined : item.id)
+            }
             onDelete={() => handleDelete(item.id, item.name)}
           />
         )}

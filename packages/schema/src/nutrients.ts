@@ -30,23 +30,21 @@ export const COMMON_DEFICIENCIES = [
   "Potassium",
 ] as const;
 
-export const CUISINE_OPTIONS = [
-  { name: "Italian", emoji: "🍝" },
-  { name: "Japanese", emoji: "🍣" },
-  { name: "Mexican", emoji: "🌮" },
-  { name: "Indian", emoji: "🍛" },
-  { name: "Chinese", emoji: "🥡" },
-  { name: "Thai", emoji: "🍜" },
-  { name: "Mediterranean", emoji: "🫒" },
-  { name: "Korean", emoji: "🥘" },
-  { name: "Vietnamese", emoji: "🍲" },
-  { name: "Middle Eastern", emoji: "🧆" },
-  { name: "French", emoji: "🥐" },
-  { name: "Greek", emoji: "🥙" },
-  { name: "American", emoji: "🍔" },
-  { name: "Ethiopian", emoji: "🫓" },
-  { name: "Turkish", emoji: "🥩" },
-  { name: "Brazilian", emoji: "🥩" },
+export const CUISINES = [
+  "Italian",
+  "Japanese",
+  "Mexican",
+  "Indian",
+  "Chinese",
+  "Thai",
+  "Mediterranean",
+  "Korean",
+  "Vietnamese",
+  "Middle Eastern",
+  "French",
+  "Greek",
+  "American",
+  "Ethiopian",
+  "Turkish",
+  "Brazilian",
 ] as const;
-
-export const CUISINE_NAMES = CUISINE_OPTIONS.map((c) => c.name);
