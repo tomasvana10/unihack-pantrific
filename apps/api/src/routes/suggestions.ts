@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { GoogleGenAI } from "@google/genai";
 import {
   aiSuggestionsResponseSchema,
@@ -5,33 +6,143 @@ import {
   userIdParamsSchema,
 } from "@pantrific/schema";
 import { readFromEnv } from "@pantrific/shared/utils";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { db } from "../db";
 import {
   deficienciesTable,
   dietaryProfilesTable,
+  mealCacheTable,
   pantryItemTable,
   pantryTable,
+  recipeCacheTable,
   trackedNutrientsTable,
 } from "../db/schema";
 
 const ai = new GoogleGenAI({ apiKey: readFromEnv("GEMINI_API_KEY") });
 const mealsSchema = aiSuggestionsResponseSchema.toJSONSchema();
 
-async function fetchMealImage(searchTerm: string) {
-  try {
-    const res = await fetch(
-      `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`,
-    );
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      meals: { strMealThumb: string }[] | null;
+const SPOONACULAR_KEY = process.env.SPOONACULAR_API_KEY;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+/** Map Spoonacular nutrient names → our nutrient names */
+const NUTRIENT_MAP: Record<string, string> = {
+  Calories: "Calories",
+  Protein: "Protein",
+  Carbohydrates: "Carbohydrates",
+  Fat: "Fat",
+  Fiber: "Fibre",
+  "Vitamin C": "Vitamin C",
+  Iron: "Iron",
+  Calcium: "Calcium",
+  "Vitamin D": "Vitamin D",
+  "Vitamin B12": "Vitamin B12",
+};
+
+type SpoonacularResult = {
+  results: Array<{
+    id: number;
+    title: string;
+    image: string;
+    cuisines?: string[];
+    nutrition?: {
+      nutrients: Array<{ name: string; amount: number; unit: string }>;
     };
-    return data.meals?.[0]?.strMealThumb ?? null;
+  }>;
+};
+
+type RecipeData = {
+  imageUrl: string | null;
+  nutrition: Record<string, number> | null;
+  cuisine: string | null;
+};
+
+/**
+ * Look up recipe data from Spoonacular, with DB-level caching.
+ * Falls back gracefully if no API key or request fails.
+ */
+async function fetchRecipeData(searchTerm: string): Promise<RecipeData> {
+  const key = searchTerm.toLowerCase().trim();
+
+  // Check recipe cache first
+  const [cached] = await db
+    .select()
+    .from(recipeCacheTable)
+    .where(eq(recipeCacheTable.searchTerm, key))
+    .limit(1);
+
+  if (cached) {
+    return {
+      imageUrl: cached.imageUrl,
+      nutrition: cached.nutrition as Record<string, number> | null,
+      cuisine: cached.cuisine,
+    };
+  }
+
+  // No API key → skip external lookup
+  if (!SPOONACULAR_KEY) {
+    return { imageUrl: null, nutrition: null, cuisine: null };
+  }
+
+  try {
+    const url = new URL("https://api.spoonacular.com/recipes/complexSearch");
+    url.searchParams.set("query", searchTerm);
+    url.searchParams.set("number", "1");
+    url.searchParams.set("addRecipeNutrition", "true");
+    url.searchParams.set("apiKey", SPOONACULAR_KEY);
+
+    const res = await fetch(url);
+    if (!res.ok) return { imageUrl: null, nutrition: null, cuisine: null };
+
+    const data = (await res.json()) as SpoonacularResult;
+    const recipe = data.results?.[0];
+
+    if (!recipe) {
+      // Cache the miss to avoid repeated lookups
+      await db
+        .insert(recipeCacheTable)
+        .values({
+          searchTerm: key,
+          imageUrl: null,
+          nutrition: null,
+          cuisine: null,
+        })
+        .onConflictDoNothing();
+      return { imageUrl: null, nutrition: null, cuisine: null };
+    }
+
+    // Map Spoonacular nutrients to our format
+    const nutrition: Record<string, number> = {};
+    if (recipe.nutrition?.nutrients) {
+      for (const n of recipe.nutrition.nutrients) {
+        const mapped = NUTRIENT_MAP[n.name];
+        if (mapped) {
+          nutrition[mapped] = Math.round(n.amount * 10) / 10;
+        }
+      }
+    }
+
+    const result: RecipeData = {
+      imageUrl: recipe.image || null,
+      nutrition: Object.keys(nutrition).length > 0 ? nutrition : null,
+      cuisine: recipe.cuisines?.[0] || null,
+    };
+
+    // Cache the result
+    await db
+      .insert(recipeCacheTable)
+      .values({
+        searchTerm: key,
+        imageUrl: result.imageUrl,
+        nutrition: result.nutrition,
+        cuisine: result.cuisine,
+      })
+      .onConflictDoNothing();
+
+    return result;
   } catch {
-    return null;
+    return { imageUrl: null, nutrition: null, cuisine: null };
   }
 }
 
@@ -72,7 +183,6 @@ async function fetchUserContext(userId: string) {
     } else if (existing !== null && item.quantity !== null) {
       merged.set(item.name, existing + item.quantity);
     } else {
-      // if any occurrence lacks a quantity, just keep it as null
       merged.set(item.name, null);
     }
   }
@@ -123,8 +233,22 @@ Requirements:
 - Address deficiencies where possible
 - Include estimated nutrition values matching the tracked nutrients
 - Keep recipes practical and achievable
+- For each meal, classify which cuisine it belongs to (e.g., Italian, Japanese, Indian, Thai, Mexican, etc.)
+- For imageSearchTerm, use a simple, common name for the dish that would match a recipe database (e.g., "chicken tikka masala" instead of "spiced yogurt chicken curry")
 ${dietType !== "none" ? `- Very important! Every meal must be 100% ${dietType}. No exceptions.` : ""}
 - Return your response as JSON matching the schema`;
+}
+
+function computeContextHash(
+  ctx: Awaited<ReturnType<typeof fetchUserContext>>,
+): string {
+  const data = JSON.stringify({
+    profile: ctx.profile,
+    ingredients: ctx.ingredients,
+    nutrients: ctx.nutrients,
+    deficiencies: ctx.deficiencies,
+  });
+  return createHash("sha256").update(data).digest("hex").slice(0, 16);
 }
 
 export async function suggestionsRoutes(app: FastifyInstance) {
@@ -135,8 +259,28 @@ export async function suggestionsRoutes(app: FastifyInstance) {
     { schema: { params: userIdParamsSchema } },
     async (req) => {
       const ctx = await fetchUserContext(req.params.userId);
-      const prompt = buildSuggestionsPrompt(ctx);
+      const contextHash = computeContextHash(ctx);
 
+      // Check meal suggestions cache (1 hour TTL, same context)
+      const cutoff = new Date(Date.now() - CACHE_TTL_MS);
+      const [cached] = await db
+        .select()
+        .from(mealCacheTable)
+        .where(
+          and(
+            eq(mealCacheTable.userId, req.params.userId),
+            eq(mealCacheTable.contextHash, contextHash),
+            gt(mealCacheTable.createdAt, cutoff),
+          ),
+        )
+        .limit(1);
+
+      if (cached) {
+        return { meals: cached.meals as MealSuggestion[] };
+      }
+
+      // Generate with AI
+      const prompt = buildSuggestionsPrompt(ctx);
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
@@ -151,12 +295,29 @@ export async function suggestionsRoutes(app: FastifyInstance) {
         JSON.parse(response.text),
       );
 
+      // Enrich each meal with Spoonacular data (parallel)
       const meals: MealSuggestion[] = await Promise.all(
-        result.meals.map(async ({ imageSearchTerm, ...meal }) => ({
-          ...meal,
-          imageUrl: await fetchMealImage(imageSearchTerm),
-        })),
+        result.meals.map(async ({ imageSearchTerm, ...meal }) => {
+          const recipeData = await fetchRecipeData(imageSearchTerm);
+          return {
+            ...meal,
+            // Use Spoonacular nutrition if available, merge with AI estimates
+            estimatedNutrition: recipeData.nutrition
+              ? { ...meal.estimatedNutrition, ...recipeData.nutrition }
+              : meal.estimatedNutrition,
+            imageUrl: recipeData.imageUrl,
+            // Prefer Spoonacular cuisine, fall back to AI classification
+            cuisine: recipeData.cuisine || meal.cuisine,
+          };
+        }),
       );
+
+      // Cache the enriched result set
+      await db.insert(mealCacheTable).values({
+        userId: req.params.userId,
+        contextHash,
+        meals: meals as unknown[],
+      });
 
       return { meals };
     },

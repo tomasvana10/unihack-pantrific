@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { toDateString } from "@pantrific/shared/utils";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { useState } from "react";
@@ -46,7 +47,7 @@ function StepperInput({
       <TouchableOpacity
         style={tw`bg-cream-dark rounded-xl w-10 h-10 items-center justify-center`}
         onPress={decrement}>
-        <Text style={tw`text-brown text-xl font-bold`}>-</Text>
+        <Ionicons name="remove" size={22} color={colors.brown} />
       </TouchableOpacity>
       <TextInput
         style={tw`flex-1 bg-cream rounded-xl px-2 py-2 text-brown text-center`}
@@ -59,7 +60,7 @@ function StepperInput({
       <TouchableOpacity
         style={tw`bg-cream-dark rounded-xl w-10 h-10 items-center justify-center`}
         onPress={increment}>
-        <Text style={tw`text-brown text-xl font-bold`}>+</Text>
+        <Ionicons name="add" size={22} color={colors.brown} />
       </TouchableOpacity>
     </View>
   );
@@ -76,13 +77,24 @@ export default function TrackingScreen({ route }: Props) {
   const [selectedNutrient, setSelectedNutrient] = useState<string>();
 
   const handleLog = async (nutrientId: string) => {
-    const val = Number(amounts[nutrientId]);
-    if (!val || val <= 0) {
-      Alert.alert("Invalid", "Enter a positive number");
+    const raw = amounts[nutrientId];
+    const val = Number(raw);
+    if (!raw || !val || val <= 0) {
+      Alert.alert("Invalid", "Enter a positive number first.");
       return;
     }
-    await logIntake.mutateAsync({ trackedNutrientId: nutrientId, amount: val });
-    setAmounts((prev) => ({ ...prev, [nutrientId]: "" }));
+    try {
+      await logIntake.mutateAsync({
+        trackedNutrientId: nutrientId,
+        amount: val,
+      });
+      setAmounts((prev) => ({ ...prev, [nutrientId]: "" }));
+    } catch (err) {
+      Alert.alert(
+        "Error",
+        err instanceof Error ? err.message : "Failed to log intake.",
+      );
+    }
   };
 
   if (isLoading) {
@@ -109,12 +121,13 @@ export default function TrackingScreen({ route }: Props) {
                     ?.consumed ?? 0,
               ),
               color: () => colors.yellowDark,
-              strokeWidth: 2,
+              strokeWidth: 3,
             },
             {
               data: history.history.map(() => chartNutrient.dailyTarget),
-              color: () => colors.pink,
-              strokeWidth: 1,
+              color: () => colors.red,
+              strokeWidth: 2,
+              withDots: false,
             },
           ],
         }
@@ -193,8 +206,7 @@ export default function TrackingScreen({ route }: Props) {
                   </View>
                   <TouchableOpacity
                     style={tw`bg-yellow rounded-xl px-4 h-10 justify-center`}
-                    onPress={() => handleLog(n.id)}
-                    disabled={logIntake.isPending}>
+                    onPress={() => handleLog(n.id)}>
                     <Text style={tw`text-brown font-semibold`}>Log</Text>
                   </TouchableOpacity>
                 </View>
@@ -228,23 +240,65 @@ export default function TrackingScreen({ route }: Props) {
             ))}
           </ScrollView>
 
+          {/* Custom legend */}
+          <View style={tw`flex-row justify-center gap-6 mb-3`}>
+            <View style={tw`flex-row items-center gap-2`}>
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: colors.yellowDark,
+                }}
+              />
+              <Text style={tw`text-brown-light text-sm`}>Consumed</Text>
+            </View>
+            <View style={tw`flex-row items-center gap-2`}>
+              <View
+                style={{
+                  width: 16,
+                  height: 3,
+                  backgroundColor: colors.red,
+                  borderRadius: 2,
+                }}
+              />
+              <Text style={tw`text-brown-light text-sm`}>
+                Target ({chartNutrient.dailyTarget} {chartNutrient.unit})
+              </Text>
+            </View>
+          </View>
+
           <View style={tw`bg-white rounded-2xl p-3 border border-cream-dark`}>
             <LineChart
               data={{
                 labels: chartData.labels,
                 datasets: chartData.datasets,
-                legend: ["Consumed", "Target"],
               }}
               width={screenWidth - 24}
-              height={200}
+              height={220}
+              fromZero
               chartConfig={{
                 backgroundColor: colors.white,
                 backgroundGradientFrom: colors.white,
                 backgroundGradientTo: colors.white,
                 decimalPlaces: 0,
-                color: () => colors.brown,
+                color: () => colors.brownLight,
                 labelColor: () => colors.brownLight,
-                propsForDots: { r: "4", fill: colors.yellowDark },
+                propsForDots: {
+                  r: "5",
+                  fill: colors.yellowDark,
+                  strokeWidth: "2",
+                  stroke: colors.white,
+                },
+                propsForBackgroundLines: {
+                  strokeDasharray: "",
+                  stroke: colors.grayLight,
+                  strokeWidth: 1,
+                },
+                fillShadowGradientFrom: colors.yellowDark,
+                fillShadowGradientFromOpacity: 0.15,
+                fillShadowGradientTo: colors.yellowDark,
+                fillShadowGradientToOpacity: 0,
               }}
               bezier
               style={{ borderRadius: 16 }}

@@ -273,7 +273,7 @@ function UnifiedPantryItems({
   if (items.length === 0) return null;
 
   return (
-    <View style={tw`mb-2`}>
+    <View style={tw`mb-2 mt-3`}>
       <Text style={tw`text-brown-light text-xs font-semibold uppercase mb-1`}>
         {pantry.name}
       </Text>

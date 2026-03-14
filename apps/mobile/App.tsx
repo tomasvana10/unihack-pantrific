@@ -105,7 +105,7 @@ function TabNavigator({ userId }: { userId: string }) {
         }}
       />
       <Tab.Screen
-        name="Account"
+        name="Me"
         component={AccountScreen}
         initialParams={{ userId }}
         options={{
@@ -127,7 +127,7 @@ function MainNavigator({ userId }: { userId: string }) {
       <RootStack.Screen
         name="MealDetail"
         component={MealDetailScreen}
-        options={{ presentation: "modal" }}
+        options={{ gestureEnabled: true, animation: "slide_from_right" }}
       />
     </RootStack.Navigator>
   );

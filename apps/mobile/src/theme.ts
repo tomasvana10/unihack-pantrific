@@ -13,3 +13,43 @@ export const colors = {
   red: "#E57373",
   green: "#81C784",
 } as const;
+
+export const CUISINE_COLORS: Record<string, { bg: string; text: string }> = {
+  Italian: { bg: "#E8F5E9", text: "#2E7D32" },
+  Japanese: { bg: "#FCE4EC", text: "#AD1457" },
+  Mexican: { bg: "#FFF3E0", text: "#E65100" },
+  Indian: { bg: "#FFF8E1", text: "#F57F17" },
+  Chinese: { bg: "#FFEBEE", text: "#C62828" },
+  Thai: { bg: "#E8EAF6", text: "#283593" },
+  Mediterranean: { bg: "#E3F2FD", text: "#1565C0" },
+  Korean: { bg: "#F3E5F5", text: "#6A1B9A" },
+  Vietnamese: { bg: "#E0F2F1", text: "#00695C" },
+  "Middle Eastern": { bg: "#FBE9E7", text: "#BF360C" },
+  French: { bg: "#EDE7F6", text: "#4527A0" },
+  Greek: { bg: "#E1F5FE", text: "#0277BD" },
+  American: { bg: "#E8EAF6", text: "#1A237E" },
+  Ethiopian: { bg: "#F1F8E9", text: "#33691E" },
+  Turkish: { bg: "#FBE9E7", text: "#D84315" },
+  Brazilian: { bg: "#F9FBE7", text: "#827717" },
+};
+
+export const NUTRIENT_UNITS: Record<string, string> = {
+  Calories: "kcal",
+  Protein: "g",
+  Carbohydrates: "g",
+  Carbs: "g",
+  Fat: "g",
+  Fibre: "g",
+  Fiber: "g",
+  "Vitamin C": "mg",
+  Iron: "mg",
+  Calcium: "mg",
+  "Vitamin D": "IU",
+  "Vitamin B12": "mcg",
+  Sugar: "g",
+  Sodium: "mg",
+  Potassium: "mg",
+  Magnesium: "mg",
+  Zinc: "mg",
+  Folate: "mcg",
+};

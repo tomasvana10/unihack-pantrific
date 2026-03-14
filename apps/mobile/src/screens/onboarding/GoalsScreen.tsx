@@ -165,7 +165,7 @@ export default function GoalsScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
 
-        <View style={tw`mt-6 mb-10 flex-row gap-3`}>
+        <View style={tw`mt-6 mb-20 flex-row gap-3`}>
           <TouchableOpacity
             style={tw`flex-1 rounded-full py-4 items-center border border-cream-dark`}
             onPress={() => navigation.navigate("Deficiencies", { userId })}>

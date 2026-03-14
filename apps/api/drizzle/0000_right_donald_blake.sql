@@ -7,6 +7,24 @@ CREATE TABLE "user" (
 	CONSTRAINT "user_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
+CREATE TABLE "meal_cache" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"context_hash" varchar(64) NOT NULL,
+	"meals" jsonb NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "recipe_cache" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"search_term" varchar(255) NOT NULL,
+	"image_url" text,
+	"nutrition" jsonb,
+	"cuisine" varchar(100),
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "recipe_cache_search_term_unique" UNIQUE("search_term")
+);
+--> statement-breakpoint
 CREATE TABLE "deficiencies" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -57,6 +75,7 @@ CREATE TABLE "tracked_nutrients" (
 	"daily_target" real NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "meal_cache" ADD CONSTRAINT "meal_cache_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "deficiencies" ADD CONSTRAINT "deficiencies_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "dietary_profiles" ADD CONSTRAINT "dietary_profiles_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pantry_item" ADD CONSTRAINT "pantry_item_pantry_id_pantry_id_fk" FOREIGN KEY ("pantry_id") REFERENCES "public"."pantry"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

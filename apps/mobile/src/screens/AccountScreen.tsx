@@ -1,4 +1,12 @@
-import { CUISINES, DIET_TYPES, GENDERS, type Gender } from "@pantrific/schema";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  COMMON_DEFICIENCIES,
+  CUISINES,
+  DIET_TYPES,
+  GENDERS,
+  type Gender,
+  SEVERITIES,
+} from "@pantrific/schema";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
@@ -18,14 +26,15 @@ import {
   useDietProfile,
   useLogout,
   useTrackedNutrients,
+  useUpdateDeficiencies,
   useUpdateNutrient,
   useUpdateProfile,
 } from "../api/hooks";
-import { colors } from "../theme";
+import { CUISINE_COLORS, colors } from "../theme";
 import tw from "../tw";
 import type { TabParams } from "../types/navigation";
 
-type Props = BottomTabScreenProps<TabParams, "Account">;
+type Props = BottomTabScreenProps<TabParams, "Me">;
 
 export default function AccountScreen({ route }: Props) {
   const { userId } = route.params;
@@ -36,6 +45,7 @@ export default function AccountScreen({ route }: Props) {
   const createNutrient = useCreateNutrient(userId);
   const updateNutrient = useUpdateNutrient(userId);
   const deleteNutrient = useDeleteNutrient(userId);
+  const updateDeficiencies = useUpdateDeficiencies(userId);
   const logout = useLogout();
   const [displayName, setDisplayName] = useState<string>();
   const [username, setUsername] = useState<string>();
@@ -170,18 +180,26 @@ export default function AccountScreen({ route }: Props) {
       style={tw`flex-1 bg-cream`}
       contentContainerStyle={{ paddingBottom: 100 }}>
       <View style={tw`px-6 pt-14 pb-4`}>
-        <Text style={tw`text-3xl font-bold text-brown`}>Account</Text>
+        <Text style={tw`text-3xl font-bold text-brown`}>Me</Text>
         {displayName && (
           <Text style={tw`text-base text-brown-light mt-1`}>{displayName}</Text>
         )}
       </View>
 
       <View style={tw`px-6`}>
+        {/* Device Authentication */}
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
-          <Text style={tw`text-base font-semibold text-brown mb-2`}>
-            Device Authentication
-          </Text>
+          <View style={tw`flex-row items-center gap-2 mb-2`}>
+            <Ionicons
+              name="hardware-chip-outline"
+              size={18}
+              color={colors.brown}
+            />
+            <Text style={tw`text-base font-semibold text-brown`}>
+              Device Authentication
+            </Text>
+          </View>
           <Text style={tw`text-sm text-brown-light mb-3`}>
             Use these credentials to connect your inference device.
           </Text>
@@ -203,35 +221,57 @@ export default function AccountScreen({ route }: Props) {
                   <Text style={tw`text-brown text-sm font-medium`}>
                     {showPassword ? password : "••••••••"}
                   </Text>
-                  <Text style={tw`text-brown-light text-xs`}>
-                    {showPassword ? "Hide" : "Reveal"}
-                  </Text>
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={16}
+                    color={colors.brownLight}
+                  />
                 </TouchableOpacity>
               </View>
             )}
           </View>
         </View>
 
+        {/* Your Details */}
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
           <View style={tw`flex-row justify-between items-center mb-3`}>
-            <Text style={tw`text-base font-semibold text-brown`}>
-              Your Details
-            </Text>
+            <View style={tw`flex-row items-center gap-2`}>
+              <Ionicons name="person-outline" size={18} color={colors.brown} />
+              <Text style={tw`text-base font-semibold text-brown`}>
+                Your Details
+              </Text>
+            </View>
             {!editingDetails ? (
-              <TouchableOpacity onPress={() => setEditingDetails(true)}>
+              <TouchableOpacity
+                onPress={() => setEditingDetails(true)}
+                style={tw`flex-row items-center gap-1`}>
+                <Ionicons
+                  name="pencil-outline"
+                  size={14}
+                  color={colors.yellowDark}
+                />
                 <Text style={tw`text-yellow-dark text-sm font-semibold`}>
-                  ✎ Edit
+                  Edit
                 </Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity onPress={handleSaveDetails}>
+              <TouchableOpacity
+                onPress={handleSaveDetails}
+                style={tw`flex-row items-center gap-1`}>
                 {autoSetup.isPending ? (
                   <ActivityIndicator size="small" color={colors.yellowDark} />
                 ) : (
-                  <Text style={tw`text-yellow-dark text-sm font-semibold`}>
-                    ✓ Save
-                  </Text>
+                  <>
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={colors.yellowDark}
+                    />
+                    <Text style={tw`text-yellow-dark text-sm font-semibold`}>
+                      Save
+                    </Text>
+                  </>
                 )}
               </TouchableOpacity>
             )}
@@ -286,7 +326,7 @@ export default function AccountScreen({ route }: Props) {
                       : "border-gray bg-white"
                   }`}>
                   {recalcNutrition && (
-                    <Text style={tw`text-brown text-xs font-bold`}>✓</Text>
+                    <Ionicons name="checkmark" size={14} color={colors.brown} />
                   )}
                 </View>
                 <Text style={tw`text-brown-light text-sm`}>
@@ -331,15 +371,30 @@ export default function AccountScreen({ route }: Props) {
           )}
         </View>
 
+        {/* Nutrition Goals */}
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
           <View style={tw`flex-row justify-between items-center mb-3`}>
-            <Text style={tw`text-base font-semibold text-brown`}>
-              Nutrition Goals
-            </Text>
-            <TouchableOpacity onPress={() => setAddingNutrient((v) => !v)}>
+            <View style={tw`flex-row items-center gap-2`}>
+              <Ionicons
+                name="nutrition-outline"
+                size={18}
+                color={colors.brown}
+              />
+              <Text style={tw`text-base font-semibold text-brown`}>
+                Nutrition Goals
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setAddingNutrient((v) => !v)}
+              style={tw`flex-row items-center gap-1`}>
+              <Ionicons
+                name={addingNutrient ? "close" : "add"}
+                size={16}
+                color={colors.yellowDark}
+              />
               <Text style={tw`text-yellow-dark text-sm font-semibold`}>
-                {addingNutrient ? "Cancel" : "+ Add"}
+                {addingNutrient ? "Cancel" : "Add"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -374,9 +429,11 @@ export default function AccountScreen({ route }: Props) {
                       autoFocus
                     />
                     <TouchableOpacity onPress={() => handleUpdateTarget(n.id)}>
-                      <Text style={tw`text-yellow-dark font-semibold text-sm`}>
-                        Save
-                      </Text>
+                      <Ionicons
+                        name="checkmark"
+                        size={18}
+                        color={colors.yellowDark}
+                      />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -394,7 +451,11 @@ export default function AccountScreen({ route }: Props) {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteNutrient(n.id, n.name)}>
-                      <Text style={tw`text-red text-sm`}>✕</Text>
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.red}
+                      />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -443,11 +504,15 @@ export default function AccountScreen({ route }: Props) {
           )}
         </View>
 
+        {/* Diet Type */}
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
-          <Text style={tw`text-base font-semibold text-brown mb-3`}>
-            Diet Type
-          </Text>
+          <View style={tw`flex-row items-center gap-2 mb-3`}>
+            <Ionicons name="leaf-outline" size={18} color={colors.brown} />
+            <Text style={tw`text-base font-semibold text-brown`}>
+              Diet Type
+            </Text>
+          </View>
           <View style={tw`flex-row gap-2`}>
             {DIET_TYPES.map((value) => (
               <TouchableOpacity
@@ -466,33 +531,83 @@ export default function AccountScreen({ route }: Props) {
           </View>
         </View>
 
+        {/* Preferred Cuisines */}
         <View
           style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
-          <Text style={tw`text-base font-semibold text-brown mb-3`}>
-            Preferred Cuisines
-          </Text>
+          <View style={tw`flex-row justify-between items-center mb-3`}>
+            <View style={tw`flex-row items-center gap-2`}>
+              <Ionicons name="globe-outline" size={18} color={colors.brown} />
+              <Text style={tw`text-base font-semibold text-brown`}>
+                Preferred Cuisines
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                const allSelected = CUISINES.every((c) =>
+                  profile?.cuisinePreferences?.includes(c),
+                );
+                updateProfile.mutate({
+                  cuisinePreferences: allSelected ? [] : [...CUISINES],
+                });
+              }}>
+              <Text style={tw`text-yellow-dark text-sm font-semibold`}>
+                {CUISINES.every((c) => profile?.cuisinePreferences?.includes(c))
+                  ? "Disable All"
+                  : "Enable All"}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View style={tw`flex-row flex-wrap gap-2`}>
-            {CUISINES.map((c) => (
-              <TouchableOpacity
-                key={c}
-                onPress={() => toggleCuisine(c)}
-                style={tw`rounded-full px-3 py-2 ${
-                  profile?.cuisinePreferences?.includes(c)
-                    ? "bg-yellow"
-                    : "bg-gray-light"
-                }`}>
-                <Text style={tw`text-brown text-sm`}>{c}</Text>
-              </TouchableOpacity>
-            ))}
+            {CUISINES.map((c) => {
+              const selected = profile?.cuisinePreferences?.includes(c);
+              const cuisineColor = CUISINE_COLORS[c];
+              return (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => toggleCuisine(c)}
+                  style={[
+                    tw`rounded-full px-3 py-2`,
+                    selected && cuisineColor
+                      ? {
+                          backgroundColor: cuisineColor.bg,
+                          borderWidth: 1.5,
+                          borderColor: cuisineColor.text,
+                        }
+                      : cuisineColor
+                        ? {
+                            backgroundColor: "transparent",
+                            borderWidth: 1.5,
+                            borderColor: cuisineColor.bg,
+                          }
+                        : selected
+                          ? tw`bg-yellow`
+                          : tw`bg-gray-light`,
+                  ]}>
+                  <Text
+                    style={[
+                      tw`text-sm`,
+                      selected && cuisineColor
+                        ? { color: cuisineColor.text, fontWeight: "600" }
+                        : tw`text-brown-light`,
+                    ]}>
+                    {c}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
+        {/* Daily Targets */}
         {(profile?.calorieTarget || profile?.proteinTarget) && (
           <View
             style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
-            <Text style={tw`text-base font-semibold text-brown mb-3`}>
-              Daily Targets
-            </Text>
+            <View style={tw`flex-row items-center gap-2 mb-3`}>
+              <Ionicons name="flag-outline" size={18} color={colors.brown} />
+              <Text style={tw`text-base font-semibold text-brown`}>
+                Daily Targets
+              </Text>
+            </View>
             {profile?.calorieTarget && (
               <View style={tw`flex-row justify-between mb-2`}>
                 <Text style={tw`text-brown-light`}>Calories</Text>
@@ -512,9 +627,104 @@ export default function AccountScreen({ route }: Props) {
           </View>
         )}
 
+        {/* Deficiencies */}
+        <View
+          style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
+          <View style={tw`flex-row items-center gap-2 mb-3`}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={18}
+              color={colors.brown}
+            />
+            <Text style={tw`text-base font-semibold text-brown`}>
+              Deficiencies
+            </Text>
+          </View>
+          <View style={tw`flex-row flex-wrap gap-2 mb-3`}>
+            {COMMON_DEFICIENCIES.map((n) => {
+              const active = data?.deficiencies?.some((d) => d.nutrient === n);
+              return (
+                <TouchableOpacity
+                  key={n}
+                  onPress={() => {
+                    const current = data?.deficiencies ?? [];
+                    const updated = active
+                      ? current
+                          .filter((d) => d.nutrient !== n)
+                          .map((d) => ({
+                            nutrient: d.nutrient,
+                            severity: d.severity ?? undefined,
+                          }))
+                      : [
+                          ...current.map((d) => ({
+                            nutrient: d.nutrient,
+                            severity: d.severity ?? undefined,
+                          })),
+                          { nutrient: n, severity: "moderate" },
+                        ];
+                    updateDeficiencies.mutate(updated);
+                  }}
+                  style={tw`rounded-full px-3 py-2 ${
+                    active ? "bg-yellow" : "bg-gray-light"
+                  }`}>
+                  <Text style={tw`text-brown text-sm`}>{n}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          {(data?.deficiencies?.length ?? 0) > 0 && (
+            <View>
+              {data?.deficiencies?.map((d) => (
+                <View
+                  key={d.id}
+                  style={tw`flex-row items-center justify-between py-2 border-b border-gray-light`}>
+                  <Text style={tw`text-brown text-sm font-medium`}>
+                    {d.nutrient}
+                  </Text>
+                  <View style={tw`flex-row gap-1`}>
+                    {SEVERITIES.map((s) => (
+                      <TouchableOpacity
+                        key={s}
+                        onPress={() => {
+                          const updated = (data?.deficiencies ?? []).map((x) =>
+                            x.nutrient === d.nutrient
+                              ? { nutrient: x.nutrient, severity: s }
+                              : {
+                                  nutrient: x.nutrient,
+                                  severity: x.severity ?? undefined,
+                                },
+                          );
+                          updateDeficiencies.mutate(updated);
+                        }}
+                        style={tw`rounded-full px-2.5 py-1 ${
+                          d.severity === s
+                            ? s === "high"
+                              ? "bg-red"
+                              : s === "moderate"
+                                ? "bg-yellow"
+                                : "bg-green"
+                            : "bg-gray-light"
+                        }`}>
+                        <Text
+                          style={tw`text-xs font-medium ${
+                            d.severity === s ? "text-white" : "text-brown-light"
+                          }`}>
+                          {s}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Sign Out */}
         <TouchableOpacity
-          style={tw`rounded-full py-4 items-center border border-red mt-4`}
+          style={tw`rounded-full py-4 items-center border border-red mt-4 flex-row justify-center gap-2`}
           onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color={colors.red} />
           <Text style={tw`text-red font-semibold text-base`}>Sign Out</Text>
         </TouchableOpacity>
       </View>

@@ -17,6 +17,7 @@ export type MealType = {
   steps: string[];
   estimatedNutrition: Record<string, number>;
   imageUrl: string | null;
+  cuisine: string | null;
   benefits: string;
 };
 
@@ -24,7 +25,7 @@ export type TabParams = {
   Pantries: { userId: string };
   Meals: { userId: string };
   Tracking: { userId: string };
-  Account: { userId: string };
+  Me: { userId: string };
 };
 
 export type RootStackParams = {

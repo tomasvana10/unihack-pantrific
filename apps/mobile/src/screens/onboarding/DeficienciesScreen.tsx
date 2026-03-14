@@ -145,7 +145,7 @@ export default function DeficienciesScreen({ navigation, route }: Props) {
         </TouchableOpacity>
       </View>
 
-      <View style={tw`flex-row gap-3 mb-10`}>
+      <View style={tw`flex-row gap-3 mb-20`}>
         <TouchableOpacity
           style={tw`flex-1 rounded-full py-4 items-center border border-cream-dark`}
           onPress={handleFinish}>

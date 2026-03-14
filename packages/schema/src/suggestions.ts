@@ -12,6 +12,7 @@ export const mealSuggestionSchema = z.object({
   steps: z.array(z.string()),
   estimatedNutrition: z.record(z.string(), z.number()),
   imageUrl: z.string().nullable(),
+  cuisine: z.string().nullable(),
   benefits: z.string(),
 });
 
