@@ -6,13 +6,18 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { getAuth } from "./src/api/client";
+import AccountScreen from "./src/screens/AccountScreen";
 import MealDetailScreen from "./src/screens/MealDetailScreen";
 import MealsScreen from "./src/screens/MealsScreen";
+import CuisinesScreen from "./src/screens/onboarding/CuisinesScreen";
 import DeficienciesScreen from "./src/screens/onboarding/DeficienciesScreen";
+import DietTypeScreen from "./src/screens/onboarding/DietTypeScreen";
 import DoneScreen from "./src/screens/onboarding/DoneScreen";
 import GoalsScreen from "./src/screens/onboarding/GoalsScreen";
 import NameScreen from "./src/screens/onboarding/NameScreen";
 import PasswordScreen from "./src/screens/onboarding/PasswordScreen";
+import QuickSetupScreen from "./src/screens/onboarding/QuickSetupScreen";
+import SetupChoiceScreen from "./src/screens/onboarding/SetupChoiceScreen";
 import PantriesScreen from "./src/screens/PantriesScreen";
 import TrackingScreen from "./src/screens/TrackingScreen";
 import tw from "./src/tw";
@@ -36,6 +41,13 @@ function OnboardingNavigator({
     <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
       <OnboardingStack.Screen name="Name" component={NameScreen} />
       <OnboardingStack.Screen name="Password" component={PasswordScreen} />
+      <OnboardingStack.Screen
+        name="SetupChoice"
+        component={SetupChoiceScreen}
+      />
+      <OnboardingStack.Screen name="QuickSetup" component={QuickSetupScreen} />
+      <OnboardingStack.Screen name="DietType" component={DietTypeScreen} />
+      <OnboardingStack.Screen name="Cuisines" component={CuisinesScreen} />
       <OnboardingStack.Screen name="Goals" component={GoalsScreen} />
       <OnboardingStack.Screen
         name="Deficiencies"
@@ -91,6 +103,16 @@ function TabNavigator({ userId }: { userId: string }) {
         options={{
           tabBarIcon: ({ focused }) => (
             <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>📊</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Account"
+        component={AccountScreen}
+        initialParams={{ userId }}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>👤</Text>
           ),
         }}
       />

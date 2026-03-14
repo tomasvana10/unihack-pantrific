@@ -1,4 +1,11 @@
-import { pgTable, real, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  real,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { userTable } from "./auth";
 
 export const pantryTable = pgTable("pantry", {
@@ -15,6 +22,7 @@ export const pantryItemTable = pgTable("pantry_item", {
     .references(() => pantryTable.id, { onDelete: "cascade" })
     .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  quantity: integer("quantity"),
   confidence: real("confidence"),
   detectedAt: timestamp("detected_at").defaultNow().notNull(),
 });

@@ -1,3 +1,4 @@
+import { COMMON_DEFICIENCIES } from "@pantrific/schema";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
@@ -14,19 +15,6 @@ import type { OnboardingStackParams } from "../../types/navigation";
 type Props = NativeStackScreenProps<OnboardingStackParams, "Deficiencies">;
 
 const SEVERITY_OPTIONS = ["low", "moderate", "high"] as const;
-
-const COMMON_DEFICIENCIES = [
-  "Iron",
-  "Vitamin D",
-  "Vitamin B12",
-  "Calcium",
-  "Magnesium",
-  "Zinc",
-  "Folate",
-  "Vitamin A",
-  "Omega-3",
-  "Potassium",
-];
 
 type Entry = { nutrient: string; severity: (typeof SEVERITY_OPTIONS)[number] };
 

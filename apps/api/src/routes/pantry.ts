@@ -74,6 +74,7 @@ export async function pantryRoutes(app: FastifyInstance) {
             items.map((item) => ({
               pantryId,
               name: item.name,
+              quantity: item.quantity,
               confidence: item.confidence,
             })),
           )

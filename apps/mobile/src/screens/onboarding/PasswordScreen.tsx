@@ -29,7 +29,7 @@ export default function PasswordScreen({ navigation, route }: Props) {
     setError("");
     try {
       const data = await register.mutateAsync({ username, password });
-      navigation.navigate("Goals", { userId: data.id });
+      navigation.navigate("SetupChoice", { userId: data.id });
     } catch (e: any) {
       setError(e.message || "Registration failed");
     }

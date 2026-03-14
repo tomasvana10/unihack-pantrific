@@ -107,6 +107,69 @@ export function useUpdateDeficiencies(userId: string) {
   });
 }
 
+export function useDietProfile(userId: string) {
+  return useQuery({
+    queryKey: ["diet", userId],
+    queryFn: () =>
+      api<{
+        profile: {
+          id: string;
+          calorieTarget: number | null;
+          proteinTarget: number | null;
+          dietType: string | null;
+          cuisinePreferences: string[];
+          gender: string | null;
+          age: number | null;
+          weight: number | null;
+        } | null;
+        deficiencies: {
+          id: string;
+          nutrient: string;
+          severity: string | null;
+        }[];
+      }>(`/diets/${userId}`),
+  });
+}
+
+export function useUpdateProfile(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      calorieTarget?: number;
+      proteinTarget?: number;
+      dietType?: string;
+      cuisinePreferences?: string[];
+      gender?: string;
+      age?: number;
+      weight?: number;
+    }) =>
+      api(`/diets/${userId}/profile`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["diet", userId] }),
+  });
+}
+
+export function useAutoSetup(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { gender: string; age: number; weight: number }) =>
+      api<{
+        calorieTarget: number;
+        proteinTarget: number;
+        nutrients: { name: string; unit: string; dailyTarget: number }[];
+      }>(`/diets/${userId}/auto-setup`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["diet", userId] });
+      qc.invalidateQueries({ queryKey: ["nutrients", userId] });
+    },
+  });
+}
+
 export function useTrackedNutrients(userId: string) {
   return useQuery({
     queryKey: ["nutrients", userId],

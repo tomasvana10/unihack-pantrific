@@ -1,3 +1,4 @@
+import { COMMON_NUTRIENTS } from "@pantrific/schema";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
@@ -14,19 +15,6 @@ import tw from "../../tw";
 import type { OnboardingStackParams } from "../../types/navigation";
 
 type Props = NativeStackScreenProps<OnboardingStackParams, "Goals">;
-
-const COMMON_NUTRIENTS = [
-  { name: "Calories", unit: "kcal", defaultTarget: 2000 },
-  { name: "Protein", unit: "g", defaultTarget: 50 },
-  { name: "Carbohydrates", unit: "g", defaultTarget: 250 },
-  { name: "Fat", unit: "g", defaultTarget: 65 },
-  { name: "Fiber", unit: "g", defaultTarget: 25 },
-  { name: "Vitamin C", unit: "mg", defaultTarget: 90 },
-  { name: "Iron", unit: "mg", defaultTarget: 18 },
-  { name: "Calcium", unit: "mg", defaultTarget: 1000 },
-  { name: "Vitamin D", unit: "IU", defaultTarget: 600 },
-  { name: "Vitamin B12", unit: "mcg", defaultTarget: 2.4 },
-];
 
 type NutrientEntry = {
   name: string;

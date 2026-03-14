@@ -1,14 +1,69 @@
+import { GoogleGenAI } from "@google/genai";
 import {
+  autoSetupResponseSchema,
+  autoSetupSchema,
+  COMMON_NUTRIENTS,
   deficiencySchema,
   dietaryProfileSchema,
   userIdParamsSchema,
 } from "@pantrific/schema";
+import { readFromEnv } from "@pantrific/shared/utils";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { db } from "../db";
-import { deficienciesTable, dietaryProfilesTable } from "../db/schema";
+import {
+  deficienciesTable,
+  dietaryProfilesTable,
+  trackedNutrientsTable,
+} from "../db/schema";
+
+const ai = new GoogleGenAI({ apiKey: readFromEnv("GEMINI_API_KEY") });
+
+function buildAutoSetupPrompt(gender: string, age: number, weight: number) {
+  const nutrientNames = COMMON_NUTRIENTS.filter(
+    (n) => n.name !== "Calories" && n.name !== "Protein",
+  )
+    .map((n) => n.name)
+    .join(", ");
+
+  return `You are a nutrition expert. Given the following person's demographics, recommend their optimal daily nutrient intake targets.
+
+Gender: ${gender}
+Age: ${age} years
+Weight: ${weight} kg
+
+Return recommended daily values for:
+- Calorie target (kcal)
+- Protein target (g)
+- And 8-10 key nutrients (e.g. ${nutrientNames}, etc.)
+
+Use established dietary reference intake (DRI) values from health organisations. Adjust for the person's demographics.
+Return as JSON matching the schema.`;
+}
+
+async function upsertProfile(userId: string, data: Record<string, unknown>) {
+  const existing = await db
+    .select()
+    .from(dietaryProfilesTable)
+    .where(eq(dietaryProfilesTable.userId, userId));
+
+  if (existing.length > 0) {
+    const [updated] = await db
+      .update(dietaryProfilesTable)
+      .set(data)
+      .where(eq(dietaryProfilesTable.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  const [created] = await db
+    .insert(dietaryProfilesTable)
+    .values({ userId, ...data })
+    .returning();
+  return created;
+}
 
 export async function dietRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
@@ -42,26 +97,58 @@ export async function dietRoutes(app: FastifyInstance) {
         body: dietaryProfileSchema,
       },
     },
+    async (req) => upsertProfile(req.params.userId, req.body),
+  );
+
+  base.post(
+    "/:userId/auto-setup",
+    {
+      schema: {
+        params: userIdParamsSchema,
+        body: autoSetupSchema,
+      },
+    },
     async (req) => {
-      const existing = await db
-        .select()
-        .from(dietaryProfilesTable)
-        .where(eq(dietaryProfilesTable.userId, req.params.userId));
+      const { userId } = req.params;
+      const { gender, age, weight } = req.body;
 
-      if (existing.length > 0) {
-        const [updated] = await db
-          .update(dietaryProfilesTable)
-          .set(req.body)
-          .where(eq(dietaryProfilesTable.userId, req.params.userId))
-          .returning();
-        return updated;
-      }
+      const prompt = buildAutoSetupPrompt(gender, age, weight);
 
-      const [created] = await db
-        .insert(dietaryProfilesTable)
-        .values({ userId: req.params.userId, ...req.body })
-        .returning();
-      return created;
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: z.toJSONSchema(autoSetupResponseSchema),
+        },
+      });
+
+      const result = autoSetupResponseSchema.parse(
+        JSON.parse(response.text ?? "{}"),
+      );
+
+      await upsertProfile(userId, {
+        calorieTarget: result.calorieTarget,
+        proteinTarget: result.proteinTarget,
+        gender,
+        age,
+        weight,
+      });
+
+      await db
+        .delete(trackedNutrientsTable)
+        .where(eq(trackedNutrientsTable.userId, userId));
+
+      await db.insert(trackedNutrientsTable).values(
+        result.nutrients.map((n) => ({
+          userId,
+          name: n.name,
+          unit: n.unit,
+          dailyTarget: n.dailyTarget,
+        })),
+      );
+
+      return result;
     },
   );
 

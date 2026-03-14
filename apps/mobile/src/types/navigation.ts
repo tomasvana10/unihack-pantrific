@@ -1,6 +1,10 @@
 export type OnboardingStackParams = {
   Name: undefined;
   Password: { username: string };
+  SetupChoice: { userId: string };
+  QuickSetup: { userId: string };
+  DietType: { userId: string };
+  Cuisines: { userId: string };
   Goals: { userId: string };
   Deficiencies: { userId: string };
   Done: { userId: string };
@@ -20,6 +24,7 @@ export type TabParams = {
   Pantries: { userId: string };
   Meals: { userId: string };
   Tracking: { userId: string };
+  Account: { userId: string };
 };
 
 export type RootStackParams = {

@@ -8,6 +8,7 @@ export type CreatePantry = z.infer<typeof createPantrySchema>;
 
 export const detectedItemSchema = z.object({
   name: z.string().min(1),
+  quantity: z.number().int().positive().optional(),
   confidence: z.number().min(0).max(1),
 });
 
