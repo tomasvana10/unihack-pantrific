@@ -10,6 +10,15 @@ function generateToken() {
   return crypto.randomUUID();
 }
 
+function generateUsername(displayName: string) {
+  const base = displayName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 20);
+  const suffix = crypto.randomUUID().slice(0, 4);
+  return `${base}-${suffix}`;
+}
+
 export async function authRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
 
@@ -17,14 +26,16 @@ export async function authRoutes(app: FastifyInstance) {
     "/register",
     { schema: { body: signUpSchema } },
     async (req, reply) => {
-      const { username, password } = req.body;
+      const { displayName, password } = req.body;
+      const username = generateUsername(displayName);
       const passwordHash = await bcrypt.hash(password, 10);
       const token = generateToken();
       const [user] = await db
         .insert(userTable)
-        .values({ username, passwordHash, token })
+        .values({ displayName, username, passwordHash, token })
         .returning({
           id: userTable.id,
+          displayName: userTable.displayName,
           username: userTable.username,
           token: userTable.token,
         });
@@ -53,7 +64,12 @@ export async function authRoutes(app: FastifyInstance) {
         .set({ token })
         .where(eq(userTable.id, user.id));
 
-      return { id: user.id, username: user.username, token };
+      return {
+        id: user.id,
+        displayName: user.displayName,
+        username: user.username,
+        token,
+      };
     },
   );
 }

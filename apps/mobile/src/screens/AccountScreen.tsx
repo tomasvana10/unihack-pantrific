@@ -21,11 +21,20 @@ export default function AccountScreen({ route }: Props) {
   const { data, isLoading } = useDietProfile(userId);
   const updateProfile = useUpdateProfile(userId);
   const logout = useLogout();
+  const [displayName, setDisplayName] = useState<string>();
   const [username, setUsername] = useState<string>();
+  const [password, setPassword] = useState<string>();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    SecureStore.getItemAsync("display_name").then((v) =>
+      setDisplayName(v ?? undefined),
+    );
     SecureStore.getItemAsync("username").then((v) =>
       setUsername(v ?? undefined),
+    );
+    SecureStore.getItemAsync("password").then((v) =>
+      setPassword(v ?? undefined),
     );
   }, []);
 
@@ -65,9 +74,41 @@ export default function AccountScreen({ route }: Props) {
   return (
     <ScrollView style={tw`flex-1 bg-cream px-6 pt-14`}>
       <Text style={tw`text-3xl font-bold text-brown mb-1`}>Account</Text>
-      {username && (
-        <Text style={tw`text-base text-brown-light mb-6`}>@{username}</Text>
+      {displayName && (
+        <Text style={tw`text-base text-brown-light mb-6`}>{displayName}</Text>
       )}
+
+      <View style={tw`bg-white rounded-2xl p-4 mb-4 border border-cream-dark`}>
+        <Text style={tw`text-base font-semibold text-brown mb-2`}>
+          Device Authentication
+        </Text>
+        <Text style={tw`text-sm text-brown-light mb-3`}>
+          Use these credentials to connect your inference device.
+        </Text>
+        <View style={tw`bg-gray-light rounded-xl p-3 gap-2`}>
+          {username && (
+            <View style={tw`flex-row justify-between`}>
+              <Text style={tw`text-brown-light text-sm`}>Username</Text>
+              <Text style={tw`text-brown text-sm font-medium`}>{username}</Text>
+            </View>
+          )}
+          {password && (
+            <View style={tw`flex-row justify-between items-center`}>
+              <Text style={tw`text-brown-light text-sm`}>Password</Text>
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                style={tw`flex-row items-center gap-2`}>
+                <Text style={tw`text-brown text-sm font-medium`}>
+                  {showPassword ? password : "••••••••"}
+                </Text>
+                <Text style={tw`text-brown-light text-xs`}>
+                  {showPassword ? "Hide" : "Reveal"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
 
       {(profile?.gender || profile?.age || profile?.weight) && (
         <View

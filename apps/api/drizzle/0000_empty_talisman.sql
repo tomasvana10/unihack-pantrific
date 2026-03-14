@@ -1,5 +1,6 @@
 CREATE TABLE "user" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"display_name" varchar(255) NOT NULL,
 	"username" varchar(255) NOT NULL,
 	"password_hash" text NOT NULL,
 	"token" text,
@@ -17,13 +18,19 @@ CREATE TABLE "dietary_profiles" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"calorie_target" integer,
-	"protein_target" real
+	"protein_target" real,
+	"diet_type" varchar(20) DEFAULT 'none',
+	"cuisine_preferences" jsonb DEFAULT '[]'::jsonb,
+	"gender" varchar(10),
+	"age" integer,
+	"weight" real
 );
 --> statement-breakpoint
 CREATE TABLE "pantry_item" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"pantry_id" uuid NOT NULL,
 	"name" varchar(255) NOT NULL,
+	"quantity" integer,
 	"confidence" real,
 	"detected_at" timestamp DEFAULT now() NOT NULL
 );

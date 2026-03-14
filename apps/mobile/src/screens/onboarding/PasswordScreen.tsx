@@ -16,7 +16,7 @@ import type { OnboardingStackParams } from "../../types/navigation";
 type Props = NativeStackScreenProps<OnboardingStackParams, "Password">;
 
 export default function PasswordScreen({ navigation, route }: Props) {
-  const { username } = route.params;
+  const { displayName } = route.params;
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -28,7 +28,7 @@ export default function PasswordScreen({ navigation, route }: Props) {
     if (!valid) return;
     setError("");
     try {
-      const data = await register.mutateAsync({ username, password });
+      const data = await register.mutateAsync({ displayName, password });
       navigation.navigate("SetupChoice", { userId: data.id });
     } catch (e: any) {
       setError(e.message || "Registration failed");
@@ -45,7 +45,7 @@ export default function PasswordScreen({ navigation, route }: Props) {
         </TouchableOpacity>
 
         <Text style={tw`text-3xl font-bold text-brown mb-2`}>
-          Hi, {username}!
+          Hi, {displayName}!
         </Text>
         <Text style={tw`text-lg text-brown-light mb-10`}>
           Create a password to secure your account

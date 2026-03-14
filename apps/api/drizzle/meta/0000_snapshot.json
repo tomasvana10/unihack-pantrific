@@ -1,5 +1,5 @@
 {
-  "id": "8761a23c-9495-4b75-99b2-71ab9b7ab26e",
+  "id": "1d3eb876-eaa3-4431-ae31-7ca4bfecb58d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -14,6 +14,12 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
         },
         "username": {
           "name": "username",
@@ -124,6 +130,38 @@
           "type": "real",
           "primaryKey": false,
           "notNull": false
+        },
+        "diet_type": {
+          "name": "diet_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'none'"
+        },
+        "cuisine_preferences": {
+          "name": "cuisine_preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "gender": {
+          "name": "gender",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age": {
+          "name": "age",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -166,6 +204,12 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "confidence": {
           "name": "confidence",

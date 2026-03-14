@@ -1,6 +1,6 @@
 export type OnboardingStackParams = {
   Name: undefined;
-  Password: { username: string };
+  Password: { displayName: string };
   SetupChoice: { userId: string };
   QuickSetup: { userId: string };
   DietType: { userId: string };

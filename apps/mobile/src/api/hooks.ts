@@ -10,15 +10,22 @@ export function useAuth() {
   });
 }
 
+type AuthResponse = {
+  id: string;
+  displayName: string;
+  username: string;
+  token: string;
+};
+
 export function useRegister() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { username: string; password: string }) => {
-      const data = await api<{ id: string; username: string; token: string }>(
-        "/auth/register",
-        { method: "POST", body: JSON.stringify(body) },
-      );
-      await saveAuth(data);
+    mutationFn: async (body: { displayName: string; password: string }) => {
+      const data = await api<AuthResponse>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      await saveAuth({ ...data, password: body.password });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["auth"] }),
@@ -29,11 +36,11 @@ export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: { username: string; password: string }) => {
-      const data = await api<{ id: string; username: string; token: string }>(
-        "/auth/login",
-        { method: "POST", body: JSON.stringify(body) },
-      );
-      await saveAuth(data);
+      const data = await api<AuthResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      await saveAuth({ ...data, password: body.password });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["auth"] }),

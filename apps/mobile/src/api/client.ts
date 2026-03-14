@@ -28,28 +28,36 @@ export async function api<T>(
 
 export async function saveAuth(data: {
   id: string;
+  displayName: string;
   username: string;
   token: string;
+  password?: string;
 }) {
   await SecureStore.setItemAsync("auth_token", data.token);
   await SecureStore.setItemAsync("user_id", data.id);
+  await SecureStore.setItemAsync("display_name", data.displayName);
   await SecureStore.setItemAsync("username", data.username);
+  if (data.password) {
+    await SecureStore.setItemAsync("password", data.password);
+  }
 }
 
 export async function getAuth() {
-  const [token, userId, username] = await Promise.all([
+  const [token, userId, displayName] = await Promise.all([
     SecureStore.getItemAsync("auth_token"),
     SecureStore.getItemAsync("user_id"),
-    SecureStore.getItemAsync("username"),
+    SecureStore.getItemAsync("display_name"),
   ]);
   if (!token || !userId) return null;
-  return { token, userId, username };
+  return { token, userId, displayName };
 }
 
 export async function clearAuth() {
   await Promise.all([
     SecureStore.deleteItemAsync("auth_token"),
     SecureStore.deleteItemAsync("user_id"),
+    SecureStore.deleteItemAsync("display_name"),
     SecureStore.deleteItemAsync("username"),
+    SecureStore.deleteItemAsync("password"),
   ]);
 }

@@ -13,6 +13,7 @@ import { dietRoutes } from "./routes/diet";
 import { pantryRoutes } from "./routes/pantry";
 import { suggestionsRoutes } from "./routes/suggestions";
 import { trackingRoutes } from "./routes/tracking";
+import { seedSampleData } from "./seed";
 
 const app = Fastify({ logger: true });
 
@@ -38,6 +39,9 @@ await app.register(async (secure) => {
 
 try {
   await checkDbConnection();
+  if (process.env.SEEDGEN === "1") {
+    await seedSampleData();
+  }
 } catch (err) {
   app.log.error(err, "couldn't connect to database or missing migrations!!");
   process.exit(1);

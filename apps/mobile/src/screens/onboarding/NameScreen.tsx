@@ -44,7 +44,7 @@ export default function NameScreen({ navigation }: Props) {
           style={tw`mt-8 rounded-full py-4 items-center ${
             name.length >= 3 ? "bg-yellow" : "bg-cream-dark"
           }`}
-          onPress={() => navigation.navigate("Password", { username: name })}
+          onPress={() => navigation.navigate("Password", { displayName: name })}
           disabled={name.length < 3}>
           <Text style={tw`text-brown font-semibold text-lg`}>Continue</Text>
         </TouchableOpacity>
