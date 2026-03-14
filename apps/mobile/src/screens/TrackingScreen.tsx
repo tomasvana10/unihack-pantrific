@@ -1,3 +1,4 @@
+import { toDateString } from "@pantrific/shared/utils";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { useState } from "react";
 import {
@@ -25,9 +26,48 @@ type Props = BottomTabScreenProps<TabParams, "Tracking">;
 
 const screenWidth = Dimensions.get("window").width - 48;
 
+function StepperInput({
+  value,
+  unit,
+  step,
+  onChange,
+}: {
+  value: string;
+  unit: string;
+  step: number;
+  onChange: (v: string) => void;
+}) {
+  const num = Number(value) || 0;
+  const decrement = () => onChange(String(Math.max(0, num - step)));
+  const increment = () => onChange(String(num + step));
+
+  return (
+    <View style={tw`flex-row items-center gap-1`}>
+      <TouchableOpacity
+        style={tw`bg-cream-dark rounded-xl w-10 h-10 items-center justify-center`}
+        onPress={decrement}>
+        <Text style={tw`text-brown text-xl font-bold`}>-</Text>
+      </TouchableOpacity>
+      <TextInput
+        style={tw`flex-1 bg-cream rounded-xl px-2 py-2 text-brown text-center`}
+        placeholder={unit}
+        placeholderTextColor="#9E9E9E"
+        keyboardType="numeric"
+        value={value}
+        onChangeText={onChange}
+      />
+      <TouchableOpacity
+        style={tw`bg-cream-dark rounded-xl w-10 h-10 items-center justify-center`}
+        onPress={increment}>
+        <Text style={tw`text-brown text-xl font-bold`}>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function TrackingScreen({ route }: Props) {
   const { userId } = route.params;
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateString();
   const { data: daily, isLoading } = useDailyTracking(userId, today);
   const { data: nutrients } = useTrackedNutrients(userId);
   const { data: history } = useTrackingHistory(userId, 7);
@@ -80,21 +120,38 @@ export default function TrackingScreen({ route }: Props) {
         }
       : null;
 
+  const getStep = (unit: string) => {
+    const u = unit.toLowerCase();
+    if (u === "kcal" || u === "calories") return 50;
+    if (u === "g") return 5;
+    if (u === "mg") return 10;
+    if (u === "mcg" || u === "µg") return 5;
+    return 1;
+  };
+
   return (
     <ScrollView
       style={tw`flex-1 bg-cream`}
-      contentContainerStyle={{ paddingBottom: 100 }}>
-      <View style={tw`px-6 pt-14 pb-2`}>
+      contentContainerStyle={{
+        paddingBottom: 100,
+        flexGrow: !daily?.nutrients?.length ? 1 : undefined,
+      }}>
+      <View style={tw`px-6 pt-14 pb-4`}>
         <Text style={tw`text-3xl font-bold text-brown`}>Daily Tracking</Text>
         <Text style={tw`text-base text-brown-light mt-1`}>{today}</Text>
       </View>
 
-      <View style={tw`px-6 mt-4`}>
+      <View
+        style={tw`px-6 mt-4 ${!daily?.nutrients?.length ? "flex-1 justify-center" : ""}`}>
         {!daily?.nutrients?.length ? (
-          <View style={tw`items-center mt-10`}>
-            <Text style={tw`text-5xl mb-4`}>📊</Text>
-            <Text style={tw`text-brown-light text-center`}>
-              No nutrients being tracked yet.{"\n"}Set them up in your profile!
+          <View style={tw`items-center px-4`}>
+            <Text style={tw`text-6xl mb-4`}>📊</Text>
+            <Text style={tw`text-brown font-semibold text-lg mb-2 text-center`}>
+              No nutrients tracked yet
+            </Text>
+            <Text style={tw`text-brown-light text-base text-center`}>
+              Set up your nutrition goals in your account settings to start
+              tracking daily intake.
             </Text>
           </View>
         ) : (
@@ -123,19 +180,19 @@ export default function TrackingScreen({ route }: Props) {
                   />
                 </View>
 
-                <View style={tw`flex-row gap-2`}>
-                  <TextInput
-                    style={tw`flex-1 bg-cream rounded-xl px-3 py-2 text-brown text-center`}
-                    placeholder={`Add ${n.unit}`}
-                    placeholderTextColor="#9E9E9E"
-                    keyboardType="numeric"
-                    value={amounts[n.id] ?? ""}
-                    onChangeText={(v) =>
-                      setAmounts((prev) => ({ ...prev, [n.id]: v }))
-                    }
-                  />
+                <View style={tw`flex-row gap-2 items-center`}>
+                  <View style={tw`flex-1`}>
+                    <StepperInput
+                      value={amounts[n.id] ?? ""}
+                      unit={n.unit}
+                      step={getStep(n.unit)}
+                      onChange={(v) =>
+                        setAmounts((prev) => ({ ...prev, [n.id]: v }))
+                      }
+                    />
+                  </View>
                   <TouchableOpacity
-                    style={tw`bg-yellow rounded-xl px-4 justify-center`}
+                    style={tw`bg-yellow rounded-xl px-4 h-10 justify-center`}
                     onPress={() => handleLog(n.id)}
                     disabled={logIntake.isPending}>
                     <Text style={tw`text-brown font-semibold`}>Log</Text>

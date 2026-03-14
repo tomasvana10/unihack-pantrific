@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { getAuth } from "./src/api/client";
+import { api, clearAuth, getAuth } from "./src/api/client";
+import { useAuth } from "./src/api/hooks";
 import AccountScreen from "./src/screens/AccountScreen";
 import MealDetailScreen from "./src/screens/MealDetailScreen";
 import MealsScreen from "./src/screens/MealsScreen";
@@ -14,10 +15,10 @@ import DeficienciesScreen from "./src/screens/onboarding/DeficienciesScreen";
 import DietTypeScreen from "./src/screens/onboarding/DietTypeScreen";
 import DoneScreen from "./src/screens/onboarding/DoneScreen";
 import GoalsScreen from "./src/screens/onboarding/GoalsScreen";
+import LoginScreen from "./src/screens/onboarding/LoginScreen";
 import NameScreen from "./src/screens/onboarding/NameScreen";
 import PasswordScreen from "./src/screens/onboarding/PasswordScreen";
 import QuickSetupScreen from "./src/screens/onboarding/QuickSetupScreen";
-import SetupChoiceScreen from "./src/screens/onboarding/SetupChoiceScreen";
 import PantriesScreen from "./src/screens/PantriesScreen";
 import TrackingScreen from "./src/screens/TrackingScreen";
 import tw from "./src/tw";
@@ -40,11 +41,8 @@ function OnboardingNavigator({
   return (
     <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
       <OnboardingStack.Screen name="Name" component={NameScreen} />
+      <OnboardingStack.Screen name="Login" component={LoginScreen} />
       <OnboardingStack.Screen name="Password" component={PasswordScreen} />
-      <OnboardingStack.Screen
-        name="SetupChoice"
-        component={SetupChoiceScreen}
-      />
       <OnboardingStack.Screen name="QuickSetup" component={QuickSetupScreen} />
       <OnboardingStack.Screen name="DietType" component={DietTypeScreen} />
       <OnboardingStack.Screen name="Cuisines" component={CuisinesScreen} />
@@ -135,21 +133,46 @@ function MainNavigator({ userId }: { userId: string }) {
   );
 }
 
-export default function App() {
+function AppContent() {
   const [state, setState] = useState<{
     loading: boolean;
     userId: string | null;
   }>({ loading: true, userId: null });
 
+  const auth = useAuth();
+
+  // Initial load from SecureStore, then verify user still exists in DB
   useEffect(() => {
     getAuth()
-      .then((auth) => {
-        setState({ loading: false, userId: auth?.userId ?? null });
+      .then(async (a) => {
+        if (!a?.userId) {
+          setState({ loading: false, userId: null });
+          return;
+        }
+        try {
+          await api(`/diets/${a.userId}`);
+          setState({ loading: false, userId: a.userId });
+        } catch {
+          await clearAuth();
+          setState({ loading: false, userId: null });
+        }
       })
       .catch(() => {
         setState({ loading: false, userId: null });
       });
   }, []);
+
+  // Detect logout: auth query returns null but we still have a userId in state
+  useEffect(() => {
+    if (
+      !auth.isLoading &&
+      auth.data === null &&
+      state.userId !== null &&
+      !state.loading
+    ) {
+      setState({ loading: false, userId: null });
+    }
+  }, [auth.data, auth.isLoading, state.userId, state.loading]);
 
   if (state.loading) {
     return (
@@ -160,17 +183,23 @@ export default function App() {
   }
 
   return (
+    <NavigationContainer>
+      {state.userId ? (
+        <MainNavigator userId={state.userId} />
+      ) : (
+        <OnboardingNavigator
+          onComplete={(userId) => setState({ loading: false, userId })}
+        />
+      )}
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <NavigationContainer>
-          {state.userId ? (
-            <MainNavigator userId={state.userId} />
-          ) : (
-            <OnboardingNavigator
-              onComplete={(userId) => setState({ loading: false, userId })}
-            />
-          )}
-        </NavigationContainer>
+        <AppContent />
       </QueryClientProvider>
     </SafeAreaProvider>
   );

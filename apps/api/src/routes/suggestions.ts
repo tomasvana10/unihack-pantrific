@@ -25,6 +25,7 @@ async function fetchMealImage(searchTerm: string) {
     const res = await fetch(
       `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(searchTerm)}`,
     );
+    if (!res.ok) return null;
     const data = (await res.json()) as {
       meals: { strMealThumb: string }[] | null;
     };
@@ -145,8 +146,9 @@ export async function suggestionsRoutes(app: FastifyInstance) {
         },
       });
 
+      if (!response.text) throw new Error("Empty response from AI");
       const result = aiSuggestionsResponseSchema.parse(
-        JSON.parse(response.text ?? "{}"),
+        JSON.parse(response.text),
       );
 
       const meals: MealSuggestion[] = await Promise.all(

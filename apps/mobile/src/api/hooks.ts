@@ -1,6 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toDateString } from "@pantrific/shared/utils";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { MealType } from "../types/navigation";
 import { api, clearAuth, getAuth, saveAuth } from "./client";
+
+function invalidateNutrientQueries(qc: QueryClient, userId: string) {
+  qc.invalidateQueries({ queryKey: ["nutrients", userId] });
+  qc.invalidateQueries({ queryKey: ["daily", userId] });
+}
 
 export function useAuth() {
   return useQuery({
@@ -73,6 +84,7 @@ export function usePantryItems(userId: string, pantryId: string) {
         items: {
           id: string;
           name: string;
+          quantity: number | null;
           confidence: number | null;
           detectedAt: string;
         }[];
@@ -200,12 +212,38 @@ export function useCreateNutrient(userId: string) {
         method: "POST",
         body: JSON.stringify(body),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["nutrients", userId] }),
+    onSuccess: () => invalidateNutrientQueries(qc, userId),
+  });
+}
+
+export function useUpdateNutrient(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      nutrientId: string;
+      body: { name?: string; unit?: string; dailyTarget?: number };
+    }) =>
+      api(`/tracking/${userId}/nutrients/${args.nutrientId}`, {
+        method: "PUT",
+        body: JSON.stringify(args.body),
+      }),
+    onSuccess: () => invalidateNutrientQueries(qc, userId),
+  });
+}
+
+export function useDeleteNutrient(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (nutrientId: string) =>
+      api(`/tracking/${userId}/nutrients/${nutrientId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => invalidateNutrientQueries(qc, userId),
   });
 }
 
 export function useDailyTracking(userId: string, date?: string) {
-  const d = date ?? new Date().toISOString().split("T")[0];
+  const d = date ?? toDateString();
   return useQuery({
     queryKey: ["daily", userId, d],
     queryFn: () =>

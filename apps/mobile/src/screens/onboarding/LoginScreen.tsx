@@ -10,29 +10,29 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { useRegister } from "../../api/hooks";
+import { useLogin } from "../../api/hooks";
 import tw from "../../tw";
 import type { OnboardingStackParams } from "../../types/navigation";
 
-type Props = NativeStackScreenProps<OnboardingStackParams, "Password">;
+type Props = NativeStackScreenProps<OnboardingStackParams, "Login">;
 
-export default function PasswordScreen({ navigation, route }: Props) {
-  const { displayName } = route.params;
+export default function LoginScreen({ navigation }: Props) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
-  const register = useRegister();
+  const login = useLogin();
 
-  const valid = password.length >= 6 && password === confirm;
+  const valid = username.length > 0 && password.length >= 6;
 
-  const handleContinue = async () => {
+  const handleLogin = async () => {
     if (!valid) return;
     setError("");
     try {
-      const data = await register.mutateAsync({ displayName, password });
-      navigation.navigate("QuickSetup", { userId: data.id });
+      const data = await login.mutateAsync({ username, password });
+      navigation.navigate("Done", { userId: data.id });
     } catch (err) {
-      setError(getErrorMessage(err));
+      const msg = getErrorMessage(err);
+      setError(msg.includes("401") ? "Invalid username or password" : msg);
     }
   };
 
@@ -47,39 +47,32 @@ export default function PasswordScreen({ navigation, route }: Props) {
           <Text style={tw`text-brown-light text-base`}>← Back</Text>
         </TouchableOpacity>
 
-        <Text style={tw`text-3xl font-bold text-brown mb-2`}>
-          Hi, {displayName}!
-        </Text>
+        <Text style={tw`text-3xl font-bold text-brown mb-2`}>Welcome back</Text>
         <Text style={tw`text-lg text-brown-light mb-10`}>
-          Create a password to secure your account
+          Sign in with your credentials
         </Text>
+
+        <Text style={tw`text-base text-brown-light mb-2`}>Username</Text>
+        <TextInput
+          style={tw`bg-white rounded-2xl px-5 py-4 text-lg text-brown border border-cream-dark mb-4`}
+          placeholder="Your username"
+          placeholderTextColor="#9E9E9E"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={username}
+          onChangeText={setUsername}
+          autoFocus
+        />
 
         <Text style={tw`text-base text-brown-light mb-2`}>Password</Text>
         <TextInput
-          style={tw`bg-white rounded-2xl px-5 py-4 text-lg text-brown border border-cream-dark mb-4`}
-          placeholder="At least 6 characters"
+          style={tw`bg-white rounded-2xl px-5 py-4 text-lg text-brown border border-cream-dark`}
+          placeholder="Your password"
           placeholderTextColor="#9E9E9E"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          autoFocus
         />
-
-        <Text style={tw`text-base text-brown-light mb-2`}>
-          Confirm password
-        </Text>
-        <TextInput
-          style={tw`bg-white rounded-2xl px-5 py-4 text-lg text-brown border border-cream-dark`}
-          placeholder="Type it again"
-          placeholderTextColor="#9E9E9E"
-          secureTextEntry
-          value={confirm}
-          onChangeText={setConfirm}
-        />
-
-        {password.length > 0 && confirm.length > 0 && password !== confirm && (
-          <Text style={tw`text-red mt-2 text-sm`}>Passwords don't match</Text>
-        )}
 
         {error ? <Text style={tw`text-red mt-2 text-sm`}>{error}</Text> : null}
 
@@ -87,12 +80,12 @@ export default function PasswordScreen({ navigation, route }: Props) {
           style={tw`mt-8 mb-10 rounded-full py-4 items-center ${
             valid ? "bg-yellow" : "bg-cream-dark"
           }`}
-          onPress={handleContinue}
-          disabled={!valid || register.isPending}>
-          {register.isPending ? (
+          onPress={handleLogin}
+          disabled={!valid || login.isPending}>
+          {login.isPending ? (
             <ActivityIndicator color="#3E2723" />
           ) : (
-            <Text style={tw`text-brown font-semibold text-lg`}>Continue</Text>
+            <Text style={tw`text-brown font-semibold text-lg`}>Sign In</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

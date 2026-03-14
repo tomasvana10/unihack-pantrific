@@ -24,18 +24,30 @@ export default function MealsScreen({ route }: Props) {
   return (
     <View style={tw`flex-1 bg-cream`}>
       <View style={tw`px-6 pt-14 pb-4`}>
-        <Text style={tw`text-3xl font-bold text-brown`}>Meal Ideas</Text>
+        <View style={tw`flex-row justify-between items-center`}>
+          <Text style={tw`text-3xl font-bold text-brown`}>Meal Ideas</Text>
+          {data?.meals && !isFetching && (
+            <TouchableOpacity
+              style={tw`bg-yellow rounded-full px-4 py-2`}
+              onPress={() => refetch()}>
+              <Text style={tw`text-brown font-semibold text-sm`}>Reload</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={tw`text-base text-brown-light mt-1`}>
           AI-powered suggestions based on your pantry & goals
         </Text>
       </View>
 
       {!data?.meals && !isLoading && !isFetching && (
-        <View style={tw`flex-1 items-center justify-center px-6`}>
-          <Text style={tw`text-6xl mb-6`}>🧑‍🍳</Text>
+        <View style={tw`flex-1 items-center justify-center px-4`}>
+          <Text style={tw`text-6xl mb-4`}>🧑‍🍳</Text>
+          <Text style={tw`text-brown font-semibold text-lg mb-2 text-center`}>
+            No meal suggestions yet
+          </Text>
           <Text style={tw`text-brown-light text-base text-center mb-8`}>
             Get personalised meal suggestions based on what's in your pantry and
-            your nutrition goals
+            your nutrition goals.
           </Text>
           <TouchableOpacity
             style={tw`bg-yellow rounded-full px-10 py-4`}
@@ -58,14 +70,6 @@ export default function MealsScreen({ route }: Props) {
         <ScrollView
           style={tw`flex-1 px-6`}
           contentContainerStyle={{ paddingBottom: 100 }}>
-          <TouchableOpacity
-            style={tw`bg-yellow rounded-full py-3 items-center mb-4`}
-            onPress={() => refetch()}>
-            <Text style={tw`text-brown font-semibold`}>
-              Regenerate Suggestions
-            </Text>
-          </TouchableOpacity>
-
           {data.meals.map((meal, idx) => (
             <TouchableOpacity
               key={idx}

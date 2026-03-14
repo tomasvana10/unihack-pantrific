@@ -1,4 +1,5 @@
 import { GENDERS, type Gender } from "@pantrific/schema";
+import { getErrorMessage } from "@pantrific/shared/utils";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import {
@@ -23,6 +24,7 @@ export default function QuickSetupScreen({ navigation, route }: Props) {
   const [age, setAge] = useState("");
   const [weight, setWeight] = useState("");
   const [error, setError] = useState("");
+  const [setupDone, setSetupDone] = useState(false);
   const autoSetup = useAutoSetup(userId);
 
   const valid = gender && Number(age) > 0 && Number(weight) > 0;
@@ -36,25 +38,56 @@ export default function QuickSetupScreen({ navigation, route }: Props) {
         age: Number(age),
         weight: Number(weight),
       });
-      navigation.navigate("Done", { userId });
-    } catch (e: any) {
-      setError(e.message || "Setup failed");
+      setSetupDone(true);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   };
+
+  if (setupDone) {
+    return (
+      <View style={tw`flex-1 bg-cream justify-center px-8`}>
+        <Text style={tw`text-3xl font-bold text-brown mb-2`}>
+          You're all set!
+        </Text>
+        <Text style={tw`text-base text-brown-light mb-10`}>
+          We've calculated your recommended daily targets. You can personalise
+          further or jump straight in.
+        </Text>
+
+        <TouchableOpacity
+          style={tw`bg-yellow rounded-2xl px-6 py-5 mb-4`}
+          onPress={() => navigation.navigate("DietType", { userId })}>
+          <Text style={tw`text-brown font-bold text-lg mb-1`}>
+            Personalise Further
+          </Text>
+          <Text style={tw`text-brown-light text-sm`}>
+            Choose your diet, preferred cuisines, nutrition goals &amp;
+            deficiencies
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={tw`bg-white border border-cream-dark rounded-2xl px-6 py-5`}
+          onPress={() => navigation.navigate("Done", { userId })}>
+          <Text style={tw`text-brown font-bold text-lg mb-1`}>Get Started</Text>
+          <Text style={tw`text-brown-light text-sm`}>
+            You can always customise these later in your account settings
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={tw`flex-1 bg-cream`}>
       <ScrollView style={tw`flex-1 px-8 pt-14`}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={tw`mb-4`}>
-          <Text style={tw`text-brown-light text-base`}>← Back</Text>
-        </TouchableOpacity>
-
-        <Text style={tw`text-3xl font-bold text-brown mb-2`}>Quick Start</Text>
+        <Text style={tw`text-3xl font-bold text-brown mb-2`}>About You</Text>
         <Text style={tw`text-base text-brown-light mb-8`}>
           We'll calculate your recommended daily intake using AI based on your
-          details
+          details.
         </Text>
 
         <Text style={tw`text-base text-brown-light mb-3`}>Gender</Text>
@@ -108,9 +141,7 @@ export default function QuickSetupScreen({ navigation, route }: Props) {
               </Text>
             </View>
           ) : (
-            <Text style={tw`text-brown font-semibold text-lg`}>
-              Set Up My Profile
-            </Text>
+            <Text style={tw`text-brown font-semibold text-lg`}>Continue</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

@@ -6,11 +6,19 @@
     "lint": "biome check",
     "format": "biome format --write",
     "api": "pnpm --filter @pantrific/api dev",
-    "mobile": "pnpm --filter @pantrific/mobile start",
+    "api:seeded": "pnpm --filter @pantrific/api seeded-dev",
+    "mobile": "pnpm --filter @pantrific/mobile dev",
+    "db": "docker run --rm --name pantrific-db -v pantrific-pgdata:/var/lib/postgresql/data -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=pantrific -p 5432:5432 postgres:17",
+    "db:fresh": "docker rm -f pantrific-db 2>/dev/null; docker volume rm pantrific-seed 2>/dev/null; docker run --rm --name pantrific-db -v pantrific-seed:/var/lib/postgresql/data -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=pantrific -p 5432:5432 postgres:17",
+    "db:wait": "until docker exec pantrific-db pg_isready -U root -d pantrific > /dev/null 2>&1; do sleep 1; done",
+    "db:setup": "pnpm db:wait && pnpm --filter @pantrific/api db:gen && pnpm --filter @pantrific/api db:push",
+    "dev": "concurrently -n db,api,mobile -c blue,green,magenta \"pnpm db\" \"pnpm db:setup && pnpm api\" \"pnpm mobile\"",
+    "dev:seeded": "concurrently -n db,api,mobile -c blue,green,magenta \"pnpm db:fresh\" \"pnpm db:setup && pnpm api:seeded\" \"pnpm mobile\"",
     "prepare": "[ -d .git ] && lefthook install || echo \"no lefthook\""
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
+    "concurrently": "^9.2.1",
     "lefthook": "^2.1.4"
   }
 }

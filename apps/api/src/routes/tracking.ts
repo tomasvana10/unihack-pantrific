@@ -3,6 +3,7 @@ import {
   trackedNutrientSchema,
   userIdParamsSchema,
 } from "@pantrific/schema";
+import { toDateString } from "@pantrific/shared/utils";
 import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
@@ -30,6 +31,41 @@ async function getDayTotals(userId: string, date: string) {
     .groupBy(intakeLogsTable.trackedNutrientId);
 
   return new Map(totals.map((t) => [t.trackedNutrientId, t.total]));
+}
+
+async function getRangeTotals(
+  userId: string,
+  startDate: string,
+  endDate: string,
+) {
+  const rangeStart = new Date(`${startDate}T00:00:00`);
+  const rangeEnd = new Date(`${endDate}T23:59:59.999`);
+
+  const totals = await db
+    .select({
+      trackedNutrientId: intakeLogsTable.trackedNutrientId,
+      date: sql<string>`to_char(${intakeLogsTable.loggedAt}, 'YYYY-MM-DD')`,
+      total: sql<number>`coalesce(sum(${intakeLogsTable.amount}), 0)`,
+    })
+    .from(intakeLogsTable)
+    .where(
+      and(
+        eq(intakeLogsTable.userId, userId),
+        gte(intakeLogsTable.loggedAt, rangeStart),
+        lt(intakeLogsTable.loggedAt, rangeEnd),
+      ),
+    )
+    .groupBy(
+      intakeLogsTable.trackedNutrientId,
+      sql`to_char(${intakeLogsTable.loggedAt}, 'YYYY-MM-DD')`,
+    );
+
+  const map = new Map<string, Map<string, number>>();
+  for (const t of totals) {
+    if (!map.has(t.date)) map.set(t.date, new Map());
+    map.get(t.date)!.set(t.trackedNutrientId, t.total);
+  }
+  return map;
 }
 
 export async function trackingRoutes(app: FastifyInstance) {
@@ -129,7 +165,7 @@ export async function trackingRoutes(app: FastifyInstance) {
       },
     },
     async (req) => {
-      const date = req.query.date ?? new Date().toISOString().split("T")[0]!;
+      const date = req.query.date ?? toDateString();
 
       const [nutrients, totals] = await Promise.all([
         db
@@ -164,29 +200,34 @@ export async function trackingRoutes(app: FastifyInstance) {
       const { userId } = req.params;
       const days = req.query.days;
 
-      const nutrients = await db
-        .select()
-        .from(trackedNutrientsTable)
-        .where(eq(trackedNutrientsTable.userId, userId));
-
-      const history = [];
+      const dates: string[] = [];
       for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0]!;
-        const totals = await getDayTotals(userId, dateStr);
+        dates.push(toDateString(d));
+      }
 
-        history.push({
+      const [nutrients, rangeTotals] = await Promise.all([
+        db
+          .select()
+          .from(trackedNutrientsTable)
+          .where(eq(trackedNutrientsTable.userId, userId)),
+        getRangeTotals(userId, dates[0]!, dates[dates.length - 1]!),
+      ]);
+
+      const history = dates.map((dateStr) => {
+        const dayTotals = rangeTotals.get(dateStr);
+        return {
           date: dateStr,
           nutrients: nutrients.map((n) => ({
             id: n.id,
             name: n.name,
             unit: n.unit,
             dailyTarget: n.dailyTarget,
-            consumed: totals.get(n.id) ?? 0,
+            consumed: dayTotals?.get(n.id) ?? 0,
           })),
-        });
-      }
+        };
+      });
 
       return { history };
     },

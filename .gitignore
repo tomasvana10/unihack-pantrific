@@ -10,3 +10,6 @@ __pycache__/
 .expo/
 android/
 tsconfig.tsbuildinfo
+.vscode
+.claude
+.credentials.json

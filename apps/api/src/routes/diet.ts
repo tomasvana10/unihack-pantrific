@@ -123,9 +123,21 @@ export async function dietRoutes(app: FastifyInstance) {
         },
       });
 
-      const result = autoSetupResponseSchema.parse(
-        JSON.parse(response.text ?? "{}"),
-      );
+      if (!response.text) throw new Error("Empty response from AI");
+      const raw = autoSetupResponseSchema.parse(JSON.parse(response.text));
+
+      // Deduplicate nutrients by name and exclude Calories/Protein (tracked separately)
+      const seen = new Set<string>();
+      const result = {
+        ...raw,
+        nutrients: raw.nutrients.filter((n) => {
+          const key = n.name.toLowerCase();
+          if (seen.has(key) || key === "calories" || key === "protein")
+            return false;
+          seen.add(key);
+          return true;
+        }),
+      };
 
       await upsertProfile(userId, {
         calorieTarget: result.calorieTarget,
