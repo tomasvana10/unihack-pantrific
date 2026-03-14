@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true
   },
+  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"],
   "references": [
     { "path": "../../packages/shared" },
     { "path": "../../packages/schema" }

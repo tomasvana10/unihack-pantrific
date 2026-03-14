@@ -146,6 +146,68 @@ export async function trackingRoutes(app: FastifyInstance) {
     },
   );
 
+  base.get(
+    "/:userId/history",
+    {
+      schema: {
+        params: userIdParamsSchema,
+        querystring: z.object({
+          days: z.coerce.number().int().positive().default(7),
+        }),
+      },
+    },
+    async (req) => {
+      const { userId } = req.params;
+      const days = req.query.days;
+
+      const nutrients = await db
+        .select()
+        .from(trackedNutrientsTable)
+        .where(eq(trackedNutrientsTable.userId, userId));
+
+      const history = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0]!;
+        const dayStart = new Date(`${dateStr}T00:00:00`);
+        const dayEnd = new Date(`${dateStr}T23:59:59.999`);
+
+        const totals = await db
+          .select({
+            trackedNutrientId: intakeLogsTable.trackedNutrientId,
+            total: sql<number>`coalesce(sum(${intakeLogsTable.amount}), 0)`,
+          })
+          .from(intakeLogsTable)
+          .where(
+            and(
+              eq(intakeLogsTable.userId, userId),
+              gte(intakeLogsTable.loggedAt, dayStart),
+              lt(intakeLogsTable.loggedAt, dayEnd),
+            ),
+          )
+          .groupBy(intakeLogsTable.trackedNutrientId);
+
+        const totalMap = new Map(
+          totals.map((t) => [t.trackedNutrientId, t.total]),
+        );
+
+        history.push({
+          date: dateStr,
+          nutrients: nutrients.map((n) => ({
+            id: n.id,
+            name: n.name,
+            unit: n.unit,
+            dailyTarget: n.dailyTarget,
+            consumed: totalMap.get(n.id) ?? 0,
+          })),
+        });
+      }
+
+      return { history };
+    },
+  );
+
   base.delete(
     "/:userId/logs/:logId",
     {

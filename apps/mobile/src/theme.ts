@@ -1,0 +1,15 @@
+export const colors = {
+  cream: "#FFF8E1",
+  creamDark: "#FFF0B3",
+  yellow: "#FFD54F",
+  yellowDark: "#F9A825",
+  brown: "#3E2723",
+  brownLight: "#6D4C41",
+  warm: "#D4A574",
+  pink: "#F3C4C7",
+  white: "#FFFFFF",
+  gray: "#9E9E9E",
+  grayLight: "#F5F5F5",
+  red: "#E57373",
+  green: "#81C784",
+} as const;

@@ -2,18 +2,26 @@
   "name": "@pantrific/mobile",
   "version": "0.1.0",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android"
+    "dev": "ANDROID_HOME=~/Library/Android/sdk pnpm exec expo run:android",
+    "startphone": "rm -f ~/.android/avd/Pixel_3a_API_33_arm64-v8a.avd/*.lock && ANDROID_HOME=~/Library/Android/sdk ~/Library/Android/sdk/emulator/emulator -avd Pixel_3a_API_33_arm64-v8a -no-snapshot &"
   },
   "dependencies": {
     "@pantrific/schema": "workspace:*",
     "@pantrific/shared": "workspace:*",
+    "@react-navigation/bottom-tabs": "^7.15.5",
+    "@react-navigation/native": "^7.1.33",
+    "@react-navigation/native-stack": "^7.14.5",
     "@tanstack/react-query": "^5.90.21",
     "expo": "~55.0.6",
+    "expo-secure-store": "^55.0.8",
     "expo-status-bar": "~55.0.4",
-    "nativewind": "^4.2.2",
-    "react": "19.2.4",
-    "react-native": "0.84.1"
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-chart-kit": "^6.12.0",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "^4.23.0",
+    "react-native-svg": "^15.15.3",
+    "twrnc": "^4.16.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.14",
