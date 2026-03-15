@@ -20,7 +20,10 @@ const app = Fastify({ logger: true });
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-await app.register(cors, { origin: true });
+await app.register(cors, {
+  origin: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+});
 
 app.get("/health", async () => ({ status: "i'm alive" }));
 app.register(authRoutes, { prefix: "/auth" });
