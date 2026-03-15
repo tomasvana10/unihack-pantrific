@@ -98,6 +98,16 @@ export default function NameScreen({ navigation }: Props) {
         <Marquee />
       </View>
 
+      {process.env.NODE_ENV === "production" && (
+        <View style={tw`mx-6 mt-24 bg-yellow rounded-xl px-4 py-3`}>
+          <Text style={tw`text-brown text-sm text-center`}>
+            Sign in with username <Text style={tw`font-bold`}>tomas-demo</Text>{" "}
+            and password <Text style={tw`font-bold`}>password</Text> to test the
+            app
+          </Text>
+        </View>
+      )}
+
       <View style={tw`flex-1 justify-center px-8`}>
         <Text style={tw`text-4xl font-bold text-brown mb-2`}>
           Welcome to{"\n"}Pantrific

@@ -248,7 +248,7 @@ ${deficiencies.length ? deficiencies.map((d) => `- ${d.nutrient} (severity: ${d.
 Requirements:
 - Prioritise using the available ingredients
 - Address deficiencies where possible
-- Include estimated nutrition values matching the tracked nutrients
+- Include estimated nutrition values matching the tracked nutrients. Use human-readable names as keys (e.g. "Vitamin C" not "vitaminC", "Calories" not "calories")
 - Keep recipes practical and achievable
 - For each meal, classify which cuisine it belongs to (e.g., Italian, Japanese, Indian, Thai, Mexican, etc.)
 - For imageSearchTerm, use a simple, common name for the dish that would match a recipe database (e.g., "chicken tikka masala" instead of "spiced yogurt chicken curry")
@@ -326,10 +326,8 @@ export async function suggestionsRoutes(app: FastifyInstance) {
           const recipeData = await fetchRecipeData(imageSearchTerm);
           return {
             ...meal,
-            // Use Spoonacular nutrition if available, merge with AI estimates
-            estimatedNutrition: recipeData.nutrition
-              ? { ...meal.estimatedNutrition, ...recipeData.nutrition }
-              : meal.estimatedNutrition,
+            // Prefer Spoonacular nutrition (accurate), fall back to AI estimates
+            estimatedNutrition: recipeData.nutrition ?? meal.estimatedNutrition,
             imageUrl: recipeData.imageUrl,
             // Prefer Spoonacular cuisine, fall back to AI classification
             cuisine: recipeData.cuisine || meal.cuisine,

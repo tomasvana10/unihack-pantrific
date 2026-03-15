@@ -5,7 +5,7 @@
     "start": "pnpm exec expo start",
     "dev": "ANDROID_HOME=~/Library/Android/sdk pnpm exec expo run:android",
     "web": "pnpm exec expo start --web",
-    "web:build": "pnpm exec expo export --platform web",
+    "web:build": "pnpm exec expo export --platform web --clear",
     "startphone": "rm -f ~/.android/avd/Pixel_3a_API_33_arm64-v8a.avd/*.lock && ANDROID_HOME=~/Library/Android/sdk ~/Library/Android/sdk/emulator/emulator -avd Pixel_3a_API_33_arm64-v8a -no-snapshot &"
   },
   "dependencies": {
