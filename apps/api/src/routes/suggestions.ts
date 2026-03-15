@@ -123,8 +123,13 @@ async function fetchRecipeData(searchTerm: string): Promise<RecipeData> {
       }
     }
 
+    // Upgrade image to higher resolution (default is 312x231)
+    const imageUrl = recipe.image
+      ? recipe.image.replace(/-\d+x\d+\./, "-636x393.")
+      : null;
+
     const result: RecipeData = {
-      imageUrl: recipe.image || null,
+      imageUrl,
       nutrition: Object.keys(nutrition).length > 0 ? nutrition : null,
       cuisine: recipe.cuisines?.[0] || null,
     };

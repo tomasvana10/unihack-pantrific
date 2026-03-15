@@ -2,10 +2,14 @@
   "name": "@pantrific/mobile",
   "version": "0.1.0",
   "scripts": {
+    "start": "pnpm exec expo start",
     "dev": "ANDROID_HOME=~/Library/Android/sdk pnpm exec expo run:android",
+    "web": "pnpm exec expo start --web",
+    "web:build": "pnpm exec expo export --platform web",
     "startphone": "rm -f ~/.android/avd/Pixel_3a_API_33_arm64-v8a.avd/*.lock && ANDROID_HOME=~/Library/Android/sdk ~/Library/Android/sdk/emulator/emulator -avd Pixel_3a_API_33_arm64-v8a -no-snapshot &"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~55.0.6",
     "@expo/vector-icons": "^15.1.1",
     "@pantrific/schema": "workspace:*",
     "@pantrific/shared": "workspace:*",
@@ -17,11 +21,13 @@
     "expo-secure-store": "^55.0.8",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-native": "0.83.2",
     "react-native-chart-kit": "^6.12.0",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.23.0",
     "react-native-svg": "^15.15.3",
+    "react-native-web": "^0.21.2",
     "twrnc": "^4.16.0"
   },
   "devDependencies": {

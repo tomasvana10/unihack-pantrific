@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./env";
 import bearerAuth from "@fastify/bearer-auth";
 import cors from "@fastify/cors";
 import { readFromEnv } from "@pantrific/shared/utils";

@@ -1,5 +1,5 @@
 import { readFromEnv } from "@pantrific/shared/utils";
-import * as SecureStore from "expo-secure-store";
+import { deleteItem, getItem, setItem } from "./storage";
 
 const API_URL = readFromEnv("EXPO_PUBLIC_API_URL");
 const ACCESS_KEY = readFromEnv("EXPO_PUBLIC_ACCESS_KEY");
@@ -36,20 +36,20 @@ export async function saveAuth(data: {
   token: string;
   password?: string;
 }) {
-  await SecureStore.setItemAsync("auth_token", data.token);
-  await SecureStore.setItemAsync("user_id", data.id);
-  await SecureStore.setItemAsync("display_name", data.displayName);
-  await SecureStore.setItemAsync("username", data.username);
+  await setItem("auth_token", data.token);
+  await setItem("user_id", data.id);
+  await setItem("display_name", data.displayName);
+  await setItem("username", data.username);
   if (data.password) {
-    await SecureStore.setItemAsync("password", data.password);
+    await setItem("password", data.password);
   }
 }
 
 export async function getAuth() {
   const [token, userId, displayName] = await Promise.all([
-    SecureStore.getItemAsync("auth_token"),
-    SecureStore.getItemAsync("user_id"),
-    SecureStore.getItemAsync("display_name"),
+    getItem("auth_token"),
+    getItem("user_id"),
+    getItem("display_name"),
   ]);
   if (!token || !userId) return null;
   return { token, userId, displayName };
@@ -57,10 +57,10 @@ export async function getAuth() {
 
 export async function clearAuth() {
   await Promise.all([
-    SecureStore.deleteItemAsync("auth_token"),
-    SecureStore.deleteItemAsync("user_id"),
-    SecureStore.deleteItemAsync("display_name"),
-    SecureStore.deleteItemAsync("username"),
-    SecureStore.deleteItemAsync("password"),
+    deleteItem("auth_token"),
+    deleteItem("user_id"),
+    deleteItem("display_name"),
+    deleteItem("username"),
+    deleteItem("password"),
   ]);
 }

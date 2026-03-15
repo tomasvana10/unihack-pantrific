@@ -183,7 +183,10 @@ export default function MealDetailScreen({ navigation, route }: Props) {
               {Object.entries(meal.estimatedNutrition).map(([key, val]) => (
                 <View
                   key={key}
-                  style={tw`bg-cream rounded-xl px-4 py-2 items-center min-w-[80]`}>
+                  style={[
+                    tw`bg-cream rounded-xl px-3 py-2 items-center`,
+                    { flexBasis: "30%", flexGrow: 1 },
+                  ]}>
                   <Text style={tw`text-brown font-bold text-lg`}>
                     {val}
                     {NUTRIENT_UNITS[key] ? ` ${NUTRIENT_UNITS[key]}` : ""}

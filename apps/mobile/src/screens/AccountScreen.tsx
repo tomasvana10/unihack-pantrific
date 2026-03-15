@@ -8,11 +8,11 @@ import {
   SEVERITIES,
 } from "@pantrific/schema";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -30,6 +30,7 @@ import {
   useUpdateNutrient,
   useUpdateProfile,
 } from "../api/hooks";
+import { getItem } from "../api/storage";
 import { CUISINE_COLORS, colors } from "../theme";
 import tw from "../tw";
 import type { TabParams } from "../types/navigation";
@@ -67,15 +68,9 @@ export default function AccountScreen({ route }: Props) {
   const [newTarget, setNewTarget] = useState("");
 
   useEffect(() => {
-    SecureStore.getItemAsync("display_name").then((v) =>
-      setDisplayName(v ?? undefined),
-    );
-    SecureStore.getItemAsync("username").then((v) =>
-      setUsername(v ?? undefined),
-    );
-    SecureStore.getItemAsync("password").then((v) =>
-      setPassword(v ?? undefined),
-    );
+    getItem("display_name").then((v) => setDisplayName(v ?? undefined));
+    getItem("username").then((v) => setUsername(v ?? undefined));
+    getItem("password").then((v) => setPassword(v ?? undefined));
   }, []);
 
   useEffect(() => {
@@ -165,6 +160,12 @@ export default function AccountScreen({ route }: Props) {
   };
 
   const handleLogout = () => {
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to sign out?")) {
+        logout.mutate();
+      }
+      return;
+    }
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {

@@ -3,7 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { api, clearAuth, getAuth } from "./src/api/client";
 import { useAuth } from "./src/api/hooks";
@@ -199,7 +199,14 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <AppContent />
+        <View
+          style={
+            Platform.OS === "web"
+              ? { flex: 1, maxWidth: 600, width: "100%", alignSelf: "center" }
+              : { flex: 1 }
+          }>
+          <AppContent />
+        </View>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

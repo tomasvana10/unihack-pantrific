@@ -5,11 +5,11 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
@@ -24,8 +24,6 @@ import tw from "../tw";
 import type { TabParams } from "../types/navigation";
 
 type Props = BottomTabScreenProps<TabParams, "Tracking">;
-
-const screenWidth = Dimensions.get("window").width - 48;
 
 function StepperInput({
   value,
@@ -68,6 +66,8 @@ function StepperInput({
 
 export default function TrackingScreen({ route }: Props) {
   const { userId } = route.params;
+  const { width: windowWidth } = useWindowDimensions();
+  const chartWidth = Math.min(windowWidth, 600) - 72;
   const today = toDateString();
   const { data: daily, isLoading } = useDailyTracking(userId, today);
   const { data: nutrients } = useTrackedNutrients(userId);
@@ -268,13 +268,17 @@ export default function TrackingScreen({ route }: Props) {
             </View>
           </View>
 
-          <View style={tw`bg-white rounded-2xl p-3 border border-cream-dark`}>
+          <View
+            style={[
+              tw`bg-white rounded-2xl p-3 border border-cream-dark`,
+              { overflow: "hidden" },
+            ]}>
             <LineChart
               data={{
                 labels: chartData.labels,
                 datasets: chartData.datasets,
               }}
-              width={screenWidth - 24}
+              width={chartWidth}
               height={220}
               fromZero
               chartConfig={{
