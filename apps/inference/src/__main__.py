@@ -1,101 +1,88 @@
-import json
-import os
 import sys
-from pathlib import Path
+import time
 
-import httpx
-from dotenv import load_dotenv
+from ultralytics import YOLO
 
-load_dotenv()
+from .api import (
+    authenticate,
+    create_pantry,
+    load_cache,
+    poll_refresh,
+    save_cache,
+    upload_items,
+)
+from .camera import capture_frame, load_images_from_dir
+from .config import IMAGE_DIR, MODEL_PATH, POLL_INTERVAL
+from .detect import aggregate_detections, run_inference
 
-API_URL = os.environ.get("API_URL")
-ACCESS_KEY = os.environ.get("ACCESS_KEY")
-CACHE_PATH = Path(__file__).resolve().parent.parent / ".credentials.json"
 
-if not API_URL or not ACCESS_KEY:
-    print("Error: API_URL and ACCESS_KEY must be set in .env")
-    sys.exit(1)
+def scan_and_upload(model: YOLO, user_id: str, pantry_id: str):
+    """Capture from camera or load images, run inference, upload."""
+    # Try camera first
+    frame = capture_frame()
+    if frame is not None:
+        print("Captured frame from camera")
+        items = run_inference(model, frame)
+    else:
+        # Fall back to image directory
+        images = load_images_from_dir()
+        if not images:
+            print("No camera and no images found.")
+            return
+        print(f"Processing {len(images)} images from {IMAGE_DIR}...")
+        all_items = [run_inference(model, img) for img in images]
+        items = aggregate_detections(all_items)
+
+    if not items:
+        print("No items detected.")
+        return
+
+    print(f"Detected {len(items)} unique items:")
+    for item in items:
+        print(f"  {item['name']}: x{item['quantity']} ({item['confidence']:.0%})")
+
+    upload_items(user_id, pantry_id, items)
 
 
-def load_cache() -> dict | None:
-    if CACHE_PATH.exists():
+def run_loop(model: YOLO, user_id: str, pantry_id: str):
+    print(f"\nPolling for refresh every {POLL_INTERVAL}s")
+    print("Press Ctrl+C to stop.\n")
+
+    # Initial scan
+    scan_and_upload(model, user_id, pantry_id)
+
+    while True:
         try:
-            return json.loads(CACHE_PATH.read_text())
-        except (json.JSONDecodeError, OSError):
-            return None
-    return None
+            time.sleep(POLL_INTERVAL)
+            if poll_refresh(user_id):
+                print("\n[refresh requested]")
+                scan_and_upload(model, user_id, pantry_id)
+        except KeyboardInterrupt:
+            print("\nStopping.")
+            break
 
 
-def save_cache(data: dict):
-    CACHE_PATH.write_text(json.dumps(data, indent=2))
-
-
-def authenticate(username: str, password: str) -> dict:
-    try:
-        res = httpx.post(
-            f"{API_URL}/auth/login",
-            json={"username": username, "password": password},
-        )
-    except httpx.ConnectError:
-        print(f"could not connect to API at {API_URL}")
-        sys.exit(1)
-
-    if res.status_code == 401:
-        print("invalid credentials")
-        sys.exit(1)
-
-    if res.status_code != 200:
-        print(f"API returned {res.status_code}")
-        sys.exit(1)
-
-    return res.json()
-
-
-def create_pantry(user_id: str, name: str) -> dict:
-    res = httpx.post(
-        f"{API_URL}/pantries/{user_id}",
-        json={"name": name},
-        headers={"Authorization": f"Bearer {ACCESS_KEY}"},
-    )
-    if res.status_code not in (200, 201):
-        print(f"failed to create pantry: {res.status_code} {res.text}")
-        sys.exit(1)
-    return res.json()
-
-
-def main():
-    print("-- pantrific inference --\n")
-
+def setup_credentials() -> tuple[str, str]:
+    """Interactive credential setup, returns (user_id, pantry_id)."""
     cache = load_cache()
 
     if cache:
-        print(f"Using cached credentials (device: {cache['pantry_name']})")
-        print(f"User: {cache['username']}")
-        use_cached = input("Continue with these? [Y/n] ").strip().lower()
-        if use_cached not in ("n", "no"):
-            print("\nAuthenticating...")
+        print(f"Cached credentials: {cache['username']} → {cache['pantry_name']}")
+        if input("Continue? [Y/n] ").strip().lower() not in ("n", "no"):
+            print("Authenticating...")
             data = authenticate(cache["username"], cache["password"])
-            print(f"Authenticated as {data['username']} (id: {data['id']})")
-            print(f"Pantry: {cache['pantry_name']} ({cache['pantry_id']})")
-            print("Starting...")
-            return
+            print(f"Authenticated as {data['username']}")
+            return cache["user_id"], cache["pantry_id"]
 
     username = input("Username: ").strip()
-    if not username:
-        print("Username is required.")
-        sys.exit(1)
-
     password = input("Password: ").strip()
-    if not password:
-        print("Password is required.")
-        sys.exit(1)
-
     pantry_name = input("Pantry identifier (e.g. Kitchen Fridge): ").strip()
-    if not pantry_name:
-        print("Pantry identifier is required.")
+
+    if not all([username, password, pantry_name]):
+        print("All fields required.")
         sys.exit(1)
 
-    print("\nAuthenticating...")
+    print("Authenticating...")
     data = authenticate(username, password)
     user_id = data["id"]
     print(f"Authenticated as {data['username']} (id: {user_id})")
@@ -105,17 +92,29 @@ def main():
     pantry_id = pantry["id"]
     print(f"Pantry created (id: {pantry_id})")
 
-    save_cache(
-        {
-            "username": username,
-            "password": password,
-            "user_id": user_id,
-            "pantry_name": pantry_name,
-            "pantry_id": pantry_id,
-        }
-    )
-    print("Credentials cached for next run.")
-    print("Starting...")
+    save_cache({
+        "username": username,
+        "password": password,
+        "user_id": user_id,
+        "pantry_name": pantry_name,
+        "pantry_id": pantry_id,
+    })
+    return user_id, pantry_id
+
+
+def main():
+    print("-- pantrific inference --\n")
+
+    if not MODEL_PATH.exists():
+        print(f"Error: model not found at {MODEL_PATH}")
+        sys.exit(1)
+
+    print(f"Loading model...")
+    model = YOLO(str(MODEL_PATH))
+    print(f"Model loaded ({len(model.names)} classes)\n")
+
+    user_id, pantry_id = setup_credentials()
+    run_loop(model, user_id, pantry_id)
 
 
 if __name__ == "__main__":

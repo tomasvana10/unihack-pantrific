@@ -496,6 +496,20 @@ export function useLogMealNutrition(userId: string) {
   });
 }
 
+export function useRefreshPantries(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api(`/pantries/${userId}/refresh`, { method: "POST" }),
+    onSuccess: () => {
+      // Refetch pantry data after a short delay to give inference time
+      setTimeout(() => {
+        qc.invalidateQueries({ queryKey: ["pantries", userId] });
+        qc.invalidateQueries({ queryKey: ["pantryItems"] });
+      }, 3000);
+    },
+  });
+}
+
 // ── Meal Suggestions ──
 
 export function useMealSuggestions(

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { usePantries, usePantryItems } from "../api/hooks";
+import { usePantries, usePantryItems, useRefreshPantries } from "../api/hooks";
 import { colors } from "../theme";
 import tw from "../tw";
 import type { TabParams } from "../types/navigation";
@@ -27,6 +27,7 @@ type PantryItem = {
 export default function PantriesScreen({ route }: Props) {
   const { userId } = route.params;
   const { data, isLoading } = usePantries(userId);
+  const refreshPantries = useRefreshPantries(userId);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("pantries");
@@ -53,7 +54,21 @@ export default function PantriesScreen({ route }: Props) {
   return (
     <View style={tw`flex-1 bg-cream`}>
       <View style={tw`px-6 pt-14 pb-4`}>
-        <Text style={tw`text-3xl font-bold text-brown`}>My Pantries</Text>
+        <View style={tw`flex-row justify-between items-center`}>
+          <Text style={tw`text-3xl font-bold text-brown`}>My Pantries</Text>
+          {pantries.length > 0 && (
+            <TouchableOpacity
+              style={tw`bg-yellow rounded-full w-10 h-10 items-center justify-center`}
+              onPress={() => refreshPantries.mutate()}
+              disabled={refreshPantries.isPending}>
+              {refreshPantries.isPending ? (
+                <ActivityIndicator size="small" color={colors.brown} />
+              ) : (
+                <Text style={{ fontSize: 18 }}>↻</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
         <Text style={tw`text-base text-brown-light mt-1`}>
           Items detected by your Pantrific camera
         </Text>

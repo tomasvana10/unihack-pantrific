@@ -10,6 +10,9 @@ import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { db } from "../db";
 import { pantryItemTable, pantryTable } from "../db/schema";
 
+// In-memory refresh flags per user
+const refreshFlags = new Map<string, boolean>();
+
 export async function pantryRoutes(app: FastifyInstance) {
   const base = app.withTypeProvider<ZodTypeProvider>();
 
@@ -95,6 +98,27 @@ export async function pantryRoutes(app: FastifyInstance) {
         .where(eq(pantryItemTable.pantryId, req.params.pantryId));
 
       return { items };
+    },
+  );
+
+  // Mobile app requests a refresh → sets flag for inference to pick up
+  base.post(
+    "/:userId/refresh",
+    { schema: { params: userIdParamsSchema } },
+    async (req) => {
+      refreshFlags.set(req.params.userId, true);
+      return { ok: true };
+    },
+  );
+
+  // Inference polls this → returns and clears the flag
+  base.post(
+    "/:userId/refresh/poll",
+    { schema: { params: userIdParamsSchema } },
+    async (req) => {
+      const refresh = refreshFlags.get(req.params.userId) ?? false;
+      if (refresh) refreshFlags.delete(req.params.userId);
+      return { refresh };
     },
   );
 }
