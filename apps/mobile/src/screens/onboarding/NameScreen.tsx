@@ -35,12 +35,18 @@ const EMOJIS = [
   "🍝",
   "🍓",
 ];
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const EMOJI_SIZE = 36; // text-2xl (~24px) + mx-2 (8px each side) ≈ 36px per item
 const MARQUEE_DURATION = 30000;
 
 function Marquee({ reverse }: { reverse?: boolean }) {
   const anim = useRef(new Animated.Value(0)).current;
-  const items = [...EMOJIS, ...EMOJIS];
+  const screenWidth = Dimensions.get("window").width;
+  // Repeat emojis enough to fill at least 2x the screen width
+  const repeats =
+    Math.ceil((screenWidth * 2) / (EMOJIS.length * EMOJI_SIZE)) + 1;
+  const items = Array.from({ length: repeats }, () => EMOJIS).flat();
+  const stripWidth = items.length * EMOJI_SIZE;
+  const halfStrip = stripWidth / 2;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -54,17 +60,21 @@ function Marquee({ reverse }: { reverse?: boolean }) {
     return () => loop.stop();
   }, [anim]);
 
+  // Start fully visible, then scroll one set of emojis worth
+  const singleSetWidth = EMOJIS.length * EMOJI_SIZE;
   const translateX = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: reverse ? [-SCREEN_WIDTH, 0] : [0, -SCREEN_WIDTH],
+    outputRange: reverse ? [-singleSetWidth, 0] : [0, -singleSetWidth],
   });
 
   return (
     <View style={{ overflow: "hidden", width: "100%" }}>
       <Animated.View
-        style={[
-          { flexDirection: "row", transform: [{ translateX }], opacity: 0.35 },
-        ]}>
+        style={{
+          flexDirection: "row",
+          transform: [{ translateX }],
+          opacity: 0.35,
+        }}>
         {items.map((emoji, i) => (
           <Text key={i} style={tw`text-2xl mx-2`}>
             {emoji}

@@ -1,8 +1,7 @@
-import { readFromEnv } from "@pantrific/shared/utils";
 import { deleteItem, getItem, setItem } from "./storage";
 
-const API_URL = readFromEnv("EXPO_PUBLIC_API_URL");
-const ACCESS_KEY = readFromEnv("EXPO_PUBLIC_ACCESS_KEY");
+const API_URL = process.env.EXPO_PUBLIC_API_URL!;
+const ACCESS_KEY = process.env.EXPO_PUBLIC_ACCESS_KEY!;
 
 export async function api<T>(
   path: string,

@@ -11,6 +11,8 @@
     "mobile:start": "pnpm --filter @pantrific/mobile start",
     "mobile:web": "pnpm --filter @pantrific/mobile web",
     "mobile:web:build": "pnpm --filter @pantrific/mobile web:build",
+    "mobile:web:preview": "pnpm mobile:web:build && pnpm exec serve apps/mobile/dist",
+    "mobile:web:preview:seeded": "pnpm db:setup && pnpm --filter @pantrific/api seed-demo && pnpm mobile:web:preview",
     "db": "docker run --rm --name pantrific-db -v pantrific-pgdata:/var/lib/postgresql/data -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=pantrific -p 5432:5432 postgres:17",
     "db:fresh": "docker rm -f pantrific-db 2>/dev/null; docker volume rm pantrific-seed 2>/dev/null; docker run --rm --name pantrific-db -v pantrific-seed:/var/lib/postgresql/data -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root -e POSTGRES_DB=pantrific -p 5432:5432 postgres:17",
     "db:wait": "until docker exec pantrific-db pg_isready -U root -d pantrific > /dev/null 2>&1; do sleep 1; done",
@@ -22,6 +24,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
     "concurrently": "^9.2.1",
-    "lefthook": "^2.1.4"
+    "lefthook": "^2.1.4",
+    "serve": "^14.2.6"
   }
 }

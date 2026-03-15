@@ -6,6 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "prod": "NODE_ENV=production tsx src/index.ts",
     "seeded-dev": "SEEDGEN=1 pnpm dev",
+    "seed-demo": "tsx src/seed-demo.ts",
     "db:gen": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"
