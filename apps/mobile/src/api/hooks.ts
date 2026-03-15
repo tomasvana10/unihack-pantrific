@@ -518,5 +518,6 @@ export function useMealSuggestions(
       api<{ meals: MealType[] }>(`/suggestions/${userId}${qs ? `?${qs}` : ""}`),
     enabled: false,
     staleTime: 30 * 60 * 1000,
+    retry: false,
   });
 }

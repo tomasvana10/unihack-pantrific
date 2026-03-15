@@ -141,10 +141,13 @@ export default function MealsScreen({ route }: Props) {
   const [showAll, setShowAll] = useState(false);
   const [focusNutrient, setFocusNutrient] = useState<string>();
   const [mood, setMood] = useState<string>();
-  const { data, isLoading, isFetching, refetch } = useMealSuggestions(userId, {
-    focusNutrient,
-    mood,
-  });
+  const { data, isLoading, isFetching, error, refetch } = useMealSuggestions(
+    userId,
+    {
+      focusNutrient,
+      mood,
+    },
+  );
 
   const meals = data?.meals ?? [];
   const visibleMeals = showAll ? meals : meals.slice(0, INITIAL_SHOW);
@@ -354,6 +357,25 @@ export default function MealsScreen({ route }: Props) {
       )}
 
       {(isLoading || isFetching) && <LoadingAnimation />}
+
+      {error && !isFetching && (
+        <View style={tw`flex-1 items-center justify-center px-6`}>
+          <Text style={tw`text-4xl mb-4`}>😕</Text>
+          <Text style={tw`text-brown font-semibold text-lg mb-2 text-center`}>
+            Something went wrong
+          </Text>
+          <Text style={tw`text-brown-light text-sm text-center mb-6`}>
+            {error.message.includes("429")
+              ? "AI rate limit reached. Please wait a minute and try again."
+              : error.message}
+          </Text>
+          <TouchableOpacity
+            style={tw`bg-yellow rounded-full px-8 py-3`}
+            onPress={() => refetch()}>
+            <Text style={tw`text-brown font-semibold`}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {data?.meals && !isFetching && (
         <ScrollView
