@@ -151,14 +151,22 @@ export async function dietRoutes(app: FastifyInstance) {
         .delete(trackedNutrientsTable)
         .where(eq(trackedNutrientsTable.userId, userId));
 
-      await db.insert(trackedNutrientsTable).values(
-        result.nutrients.map((n) => ({
+      // Only insert Calories and Protein as defaults.
+      // User picks additional nutrients in the Goals screen.
+      await db.insert(trackedNutrientsTable).values([
+        {
           userId,
-          name: n.name,
-          unit: n.unit,
-          dailyTarget: n.dailyTarget,
-        })),
-      );
+          name: "Calories",
+          unit: "kcal",
+          dailyTarget: result.calorieTarget,
+        },
+        {
+          userId,
+          name: "Protein",
+          unit: "g",
+          dailyTarget: result.proteinTarget,
+        },
+      ]);
 
       return result;
     },

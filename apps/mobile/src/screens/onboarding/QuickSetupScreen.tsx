@@ -173,9 +173,9 @@ export default function QuickSetupScreen({ navigation, route }: Props) {
           onPress={handleContinue}
           disabled={!valid || autoSetup.isPending}>
           {autoSetup.isPending ? (
-            <View style={tw`items-center`}>
-              <ActivityIndicator color="#3E2723" />
-              <Text style={tw`text-brown-light text-sm mt-2`}>
+            <View style={tw`flex-row items-center justify-center gap-2`}>
+              <ActivityIndicator color="#3E2723" size="small" />
+              <Text style={tw`text-brown-light text-sm`}>
                 Calculating your targets...
               </Text>
             </View>

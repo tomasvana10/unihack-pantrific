@@ -277,13 +277,20 @@ export async function suggestionsRoutes(app: FastifyInstance) {
   base.get(
     "/:userId",
     { schema: { params: userIdParamsSchema } },
-    async (req) => {
+    async (req, reply) => {
       const query = req.query as Record<string, string>;
       const preferences = {
         focusNutrient: query.focusNutrient || undefined,
         mood: query.mood || undefined,
       };
       const ctx = await fetchUserContext(req.params.userId);
+
+      if (ctx.ingredients.length === 0) {
+        return reply.code(400).send({
+          error: "No pantry items found. Add items to your pantry first.",
+        });
+      }
+
       const contextHash = computeContextHash(ctx, preferences);
 
       // Check meal suggestions cache (1 hour TTL, same context)

@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useUpdateProfile } from "../../api/hooks";
+import { CUISINE_COLORS } from "../../theme";
 import tw from "../../tw";
 import type { OnboardingStackParams } from "../../types/navigation";
 
@@ -60,21 +61,46 @@ export default function CuisinesScreen({ navigation, route }: Props) {
       </Text>
 
       <View style={tw`flex-row flex-wrap gap-3 mb-6`}>
-        {CUISINES.map((name) => (
-          <TouchableOpacity
-            key={name}
-            onPress={() => toggle(name)}
-            style={tw`rounded-2xl px-4 py-3 ${
-              selected.includes(name)
-                ? "bg-yellow"
-                : "bg-white border border-cream-dark"
-            }`}>
-            <Text style={tw`text-center text-xl mb-1`}>
-              {CUISINE_EMOJIS[name] ?? "🍴"}
-            </Text>
-            <Text style={tw`text-brown font-medium text-sm`}>{name}</Text>
-          </TouchableOpacity>
-        ))}
+        {CUISINES.map((name) => {
+          const isSelected = selected.includes(name);
+          const cuisineColor = CUISINE_COLORS[name];
+          return (
+            <TouchableOpacity
+              key={name}
+              onPress={() => toggle(name)}
+              style={[
+                tw`rounded-2xl px-4 py-3`,
+                isSelected && cuisineColor
+                  ? {
+                      backgroundColor: cuisineColor.bg,
+                      borderWidth: 1.5,
+                      borderColor: cuisineColor.text,
+                    }
+                  : cuisineColor
+                    ? {
+                        backgroundColor: "transparent",
+                        borderWidth: 1.5,
+                        borderColor: cuisineColor.bg,
+                      }
+                    : isSelected
+                      ? tw`bg-yellow`
+                      : tw`bg-white border border-cream-dark`,
+              ]}>
+              <Text style={tw`text-center text-xl mb-1`}>
+                {CUISINE_EMOJIS[name] ?? "🍴"}
+              </Text>
+              <Text
+                style={[
+                  tw`font-medium text-sm`,
+                  isSelected && cuisineColor
+                    ? { color: cuisineColor.text }
+                    : tw`text-brown`,
+                ]}>
+                {name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <View style={tw`flex-row gap-3 mb-10`}>

@@ -45,8 +45,6 @@ function Marquee({ reverse }: { reverse?: boolean }) {
   const repeats =
     Math.ceil((screenWidth * 2) / (EMOJIS.length * EMOJI_SIZE)) + 1;
   const items = Array.from({ length: repeats }, () => EMOJIS).flat();
-  const stripWidth = items.length * EMOJI_SIZE;
-  const halfStrip = stripWidth / 2;
 
   useEffect(() => {
     const loop = Animated.loop(

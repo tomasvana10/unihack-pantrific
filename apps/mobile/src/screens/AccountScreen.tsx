@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
   COMMON_DEFICIENCIES,
+  COMMON_NUTRIENTS,
   CUISINES,
   DIET_TYPES,
   GENDERS,
@@ -136,6 +137,12 @@ export default function AccountScreen({ route }: Props) {
   };
 
   const handleDeleteNutrient = (id: string, name: string) => {
+    if (Platform.OS === "web") {
+      if (window.confirm(`Stop tracking "${name}"?`)) {
+        deleteNutrient.mutate(id);
+      }
+      return;
+    }
     Alert.alert("Remove Nutrient", `Stop tracking "${name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
@@ -440,6 +447,7 @@ export default function AccountScreen({ route }: Props) {
                 ) : (
                   <View style={tw`flex-row items-center gap-3`}>
                     <TouchableOpacity
+                      style={tw`flex-row items-center gap-1.5`}
                       onPress={() =>
                         setEditingTargets((prev) => ({
                           ...prev,
@@ -449,6 +457,11 @@ export default function AccountScreen({ route }: Props) {
                       <Text style={tw`text-brown font-medium text-sm`}>
                         {n.dailyTarget} {n.unit}
                       </Text>
+                      <Ionicons
+                        name="pencil-outline"
+                        size={13}
+                        color={colors.brownLight}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteNutrient(n.id, n.name)}>
@@ -466,18 +479,71 @@ export default function AccountScreen({ route }: Props) {
 
           {addingNutrient && (
             <View style={tw`mt-3 gap-2`}>
-              <TextInput
-                style={tw`bg-gray-light rounded-xl px-4 py-3 text-brown border border-cream-dark`}
-                placeholder="Nutrient name (e.g. Vitamin D)"
-                placeholderTextColor="#9E9E9E"
-                value={newName}
-                onChangeText={setNewName}
-                autoFocus
-              />
+              {/* Preset nutrient chips — hide already tracked ones */}
+              <View style={tw`flex-row flex-wrap gap-2 mb-2`}>
+                {COMMON_NUTRIENTS.filter(
+                  (cn) => !trackedNutrients.some((t) => t.name === cn.name),
+                ).map((cn) => (
+                  <TouchableOpacity
+                    key={cn.name}
+                    onPress={() => {
+                      setNewName(cn.name);
+                      setNewUnit(cn.unit);
+                      setNewTarget(String(cn.defaultTarget));
+                    }}
+                    style={tw`rounded-full px-3 py-2 ${
+                      newName === cn.name ? "bg-yellow" : "bg-gray-light"
+                    }`}>
+                    <Text
+                      style={tw`text-sm ${
+                        newName === cn.name
+                          ? "text-brown font-semibold"
+                          : "text-brown-light"
+                      }`}>
+                      {cn.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  onPress={() => {
+                    setNewName("");
+                    setNewUnit("");
+                    setNewTarget("");
+                  }}
+                  style={tw`rounded-full px-3 py-2 ${
+                    newName !== "" &&
+                    !COMMON_NUTRIENTS.some((cn) => cn.name === newName)
+                      ? "bg-yellow"
+                      : "bg-gray-light"
+                  }`}>
+                  <Text
+                    style={tw`text-sm ${
+                      newName !== "" &&
+                      !COMMON_NUTRIENTS.some((cn) => cn.name === newName)
+                        ? "text-brown font-semibold"
+                        : "text-brown-light"
+                    }`}>
+                    Custom
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Custom name input — only if not a preset */}
+              {(newName === "" ||
+                !COMMON_NUTRIENTS.some((cn) => cn.name === newName)) && (
+                <TextInput
+                  style={tw`bg-gray-light rounded-xl px-4 py-3 text-brown border border-cream-dark`}
+                  placeholder="Nutrient name"
+                  placeholderTextColor="#9E9E9E"
+                  value={newName}
+                  onChangeText={setNewName}
+                />
+              )}
+
               <View style={tw`flex-row gap-2`}>
                 <TextInput
                   style={tw`flex-1 bg-gray-light rounded-xl px-4 py-3 text-brown border border-cream-dark`}
-                  placeholder="Unit (e.g. mg)"
+                  placeholder="Unit"
                   placeholderTextColor="#9E9E9E"
                   value={newUnit}
                   onChangeText={setNewUnit}

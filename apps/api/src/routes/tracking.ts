@@ -4,7 +4,7 @@ import {
   userIdParamsSchema,
 } from "@pantrific/schema";
 import { toDateString } from "@pantrific/shared/utils";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -78,7 +78,8 @@ export async function trackingRoutes(app: FastifyInstance) {
       const nutrients = await db
         .select()
         .from(trackedNutrientsTable)
-        .where(eq(trackedNutrientsTable.userId, req.params.userId));
+        .where(eq(trackedNutrientsTable.userId, req.params.userId))
+        .orderBy(asc(trackedNutrientsTable.name));
       return { nutrients };
     },
   );
@@ -92,6 +93,28 @@ export async function trackingRoutes(app: FastifyInstance) {
       },
     },
     async (req, reply) => {
+      // Skip if nutrient with same name already exists for this user
+      const existing = await db
+        .select({ id: trackedNutrientsTable.id })
+        .from(trackedNutrientsTable)
+        .where(
+          and(
+            eq(trackedNutrientsTable.userId, req.params.userId),
+            eq(trackedNutrientsTable.name, req.body.name),
+          ),
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update existing instead of duplicating
+        const [updated] = await db
+          .update(trackedNutrientsTable)
+          .set({ dailyTarget: req.body.dailyTarget, unit: req.body.unit })
+          .where(eq(trackedNutrientsTable.id, existing[0].id))
+          .returning();
+        return reply.code(200).send(updated);
+      }
+
       const [created] = await db
         .insert(trackedNutrientsTable)
         .values({ userId: req.params.userId, ...req.body })

@@ -33,9 +33,27 @@ const LOADING_MESSAGES = [
 const INITIAL_SHOW = 5;
 
 const MOODS = [
-  { key: "energetic", label: "Energetic", icon: "flash-outline" },
-  { key: "relaxed", label: "Relaxed", icon: "leaf-outline" },
-  { key: "focused", label: "Focused", icon: "bulb-outline" },
+  {
+    key: "energetic",
+    label: "Energetic",
+    icon: "flash-outline",
+    color: "#E65100",
+    bg: "#FFF3E0",
+  },
+  {
+    key: "relaxed",
+    label: "Relaxed",
+    icon: "leaf-outline",
+    color: "#2E7D32",
+    bg: "#E8F5E9",
+  },
+  {
+    key: "focused",
+    label: "Focused",
+    icon: "bulb-outline",
+    color: "#1565C0",
+    bg: "#E3F2FD",
+  },
 ] as const;
 
 function LoadingAnimation() {
@@ -225,22 +243,32 @@ export default function MealsScreen({ route }: Props) {
               <TouchableOpacity
                 key={m.key}
                 onPress={() => setMood(mood === m.key ? undefined : m.key)}
-                style={tw`flex-row items-center gap-1 rounded-full px-3 py-1.5 ${
+                style={[
+                  tw`flex-row items-center gap-1 rounded-full px-3 py-1.5`,
                   mood === m.key
-                    ? "bg-yellow"
-                    : "bg-white border border-cream-dark"
-                }`}>
+                    ? {
+                        backgroundColor: m.bg,
+                        borderWidth: 1.5,
+                        borderColor: m.color,
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        borderWidth: 1.5,
+                        borderColor: m.bg,
+                      },
+                ]}>
                 <Ionicons
                   name={m.icon}
                   size={12}
-                  color={mood === m.key ? colors.brown : colors.brownLight}
+                  color={mood === m.key ? m.color : colors.brownLight}
                 />
                 <Text
-                  style={tw`text-xs ${
+                  style={[
+                    tw`text-xs`,
                     mood === m.key
-                      ? "text-brown font-semibold"
-                      : "text-brown-light"
-                  }`}>
+                      ? { color: m.color, fontWeight: "600" }
+                      : tw`text-brown-light`,
+                  ]}>
                   {m.label}
                 </Text>
               </TouchableOpacity>
@@ -353,6 +381,9 @@ export default function MealsScreen({ route }: Props) {
               Generate Meals
             </Text>
           </TouchableOpacity>
+          <Text style={tw`text-brown-light text-xs text-center mt-3`}>
+            This usually takes 15-30 seconds
+          </Text>
         </ScrollView>
       )}
 
@@ -365,15 +396,19 @@ export default function MealsScreen({ route }: Props) {
             Something went wrong
           </Text>
           <Text style={tw`text-brown-light text-sm text-center mb-6`}>
-            {error.message.includes("429")
-              ? "AI rate limit reached. Please wait a minute and try again."
-              : error.message}
+            {error.message.includes("pantry")
+              ? "Your pantries are empty. Connect an inference device or add items to generate meals."
+              : error.message.includes("429")
+                ? "AI rate limit reached. Please wait a minute and try again."
+                : error.message}
           </Text>
-          <TouchableOpacity
-            style={tw`bg-yellow rounded-full px-8 py-3`}
-            onPress={() => refetch()}>
-            <Text style={tw`text-brown font-semibold`}>Try Again</Text>
-          </TouchableOpacity>
+          {!error.message.includes("pantry") && (
+            <TouchableOpacity
+              style={tw`bg-yellow rounded-full px-8 py-3`}
+              onPress={() => refetch()}>
+              <Text style={tw`text-brown font-semibold`}>Try Again</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
