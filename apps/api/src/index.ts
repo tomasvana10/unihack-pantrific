@@ -13,7 +13,7 @@ import { dietRoutes } from "./routes/diet";
 import { pantryRoutes } from "./routes/pantry";
 import { suggestionsRoutes } from "./routes/suggestions";
 import { trackingRoutes } from "./routes/tracking";
-import { seedSampleData } from "./seed";
+import { seedSampleData } from "./seed-dev";
 
 const app = Fastify({ logger: true });
 

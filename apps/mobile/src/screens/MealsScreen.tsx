@@ -218,12 +218,18 @@ export default function MealsScreen({ route }: Props) {
     return CUISINE_COLORS[cuisine] ?? { bg: colors.yellow, text: colors.brown };
   };
 
+  const hasMeals = !!data?.meals;
+
   return (
     <View style={tw`flex-1 bg-cream`}>
       <View style={tw`px-6 pt-14 pb-2`}>
-        <View style={tw`flex-row justify-between items-center`}>
+        <View
+          style={[
+            tw`flex-row justify-between items-center`,
+            { minHeight: 40 },
+          ]}>
           <Text style={tw`text-3xl font-bold text-brown`}>Meal Ideas</Text>
-          {data?.meals && !isFetching && (
+          {hasMeals && !isFetching && (
             <TouchableOpacity
               style={tw`bg-yellow rounded-full w-10 h-10 items-center justify-center`}
               onPress={() => {
@@ -234,158 +240,90 @@ export default function MealsScreen({ route }: Props) {
             </TouchableOpacity>
           )}
         </View>
-        <Text style={tw`text-base text-brown-light mt-2 mb-2`}>
+        <Text style={tw`text-base text-brown-light mt-1`}>
           AI-powered suggestions based on your pantry & goals
         </Text>
-        {data?.meals && !isFetching && (
-          <View style={tw`flex-row flex-wrap gap-1.5 mb-1`}>
-            {MOODS.map((m) => (
-              <TouchableOpacity
-                key={m.key}
-                onPress={() => setMood(mood === m.key ? undefined : m.key)}
-                style={[
-                  tw`flex-row items-center gap-1 rounded-full px-3 py-1.5`,
-                  mood === m.key
-                    ? {
-                        backgroundColor: m.bg,
-                        borderWidth: 1.5,
-                        borderColor: m.color,
-                      }
-                    : {
-                        backgroundColor: "transparent",
-                        borderWidth: 1.5,
-                        borderColor: m.bg,
-                      },
-                ]}>
-                <Ionicons
-                  name={m.icon}
-                  size={12}
-                  color={mood === m.key ? m.color : colors.brownLight}
-                />
-                <Text
+
+        {!isLoading && !isFetching && (
+          <View style={tw`mt-3`}>
+            <Text style={tw`text-xs font-semibold text-brown-light mb-1.5`}>
+              I want to feel
+            </Text>
+            <View style={tw`flex-row flex-wrap gap-1.5 mb-3`}>
+              {MOODS.map((m) => (
+                <TouchableOpacity
+                  key={m.key}
+                  onPress={() => setMood(mood === m.key ? undefined : m.key)}
                   style={[
-                    tw`text-xs`,
-                    mood === m.key
-                      ? { color: m.color, fontWeight: "600" }
-                      : tw`text-brown-light`,
+                    tw`flex-row items-center gap-1 rounded-full px-3 py-1.5`,
+                    { backgroundColor: mood === m.key ? m.color : m.bg },
                   ]}>
-                  {m.label}
+                  <Ionicons
+                    name={m.icon}
+                    size={12}
+                    color={mood === m.key ? "#fff" : m.color}
+                  />
+                  <Text
+                    style={[
+                      tw`text-xs font-semibold`,
+                      { color: mood === m.key ? "#fff" : m.color },
+                    ]}>
+                    {m.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {(nutrientsData?.nutrients?.length ?? 0) > 0 && (
+              <>
+                <Text style={tw`text-xs font-semibold text-brown-light mb-1.5`}>
+                  Focus on nutrient
                 </Text>
-              </TouchableOpacity>
-            ))}
-            {nutrientsData?.nutrients?.map((n) => (
-              <TouchableOpacity
-                key={n.id}
-                onPress={() =>
-                  setFocusNutrient(
-                    focusNutrient === n.name ? undefined : n.name,
-                  )
-                }
-                style={tw`rounded-full px-3 py-1.5 ${
-                  focusNutrient === n.name
-                    ? "bg-yellow"
-                    : "bg-white border border-cream-dark"
-                }`}>
-                <Text
-                  style={tw`text-xs ${
-                    focusNutrient === n.name
-                      ? "text-brown font-semibold"
-                      : "text-brown-light"
-                  }`}>
-                  {n.name}
+                <View style={tw`flex-row flex-wrap gap-1.5 mb-2`}>
+                  {nutrientsData?.nutrients?.map((n) => (
+                    <TouchableOpacity
+                      key={n.id}
+                      onPress={() =>
+                        setFocusNutrient(
+                          focusNutrient === n.name ? undefined : n.name,
+                        )
+                      }
+                      style={tw`rounded-full px-3 py-1.5 ${
+                        focusNutrient === n.name
+                          ? "bg-yellow"
+                          : "bg-white border border-cream-dark"
+                      }`}>
+                      <Text
+                        style={tw`text-xs ${
+                          focusNutrient === n.name
+                            ? "text-brown font-semibold"
+                            : "text-brown-light"
+                        }`}>
+                        {n.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {!hasMeals && (
+              <>
+                <TouchableOpacity
+                  style={tw`bg-yellow rounded-full py-3 items-center mt-1`}
+                  onPress={() => refetch()}>
+                  <Text style={tw`text-brown font-semibold text-base`}>
+                    Generate Meals
+                  </Text>
+                </TouchableOpacity>
+                <Text style={tw`text-brown-light text-xs text-center mt-2`}>
+                  This usually takes 15-30 seconds
                 </Text>
-              </TouchableOpacity>
-            ))}
+              </>
+            )}
           </View>
         )}
       </View>
-
-      {!data?.meals && !isLoading && !isFetching && (
-        <ScrollView
-          style={tw`flex-1`}
-          contentContainerStyle={tw`px-6 pt-4 pb-20`}>
-          <Text style={tw`text-brown font-semibold text-lg mb-2 text-center`}>
-            No meal suggestions yet
-          </Text>
-          <Text style={tw`text-brown-light text-base text-center mb-6`}>
-            Personalise your suggestions, then hit generate.
-          </Text>
-
-          {/* Mood selector */}
-          <Text style={tw`text-sm font-semibold text-brown mb-2`}>
-            I want to feel...
-          </Text>
-          <View style={tw`flex-row gap-2 mb-5`}>
-            {MOODS.map((m) => (
-              <TouchableOpacity
-                key={m.key}
-                onPress={() => setMood(mood === m.key ? undefined : m.key)}
-                style={tw`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${
-                  mood === m.key
-                    ? "bg-yellow"
-                    : "bg-white border border-cream-dark"
-                }`}>
-                <Ionicons
-                  name={m.icon}
-                  size={16}
-                  color={mood === m.key ? colors.brown : colors.brownLight}
-                />
-                <Text
-                  style={tw`text-sm font-medium ${
-                    mood === m.key ? "text-brown" : "text-brown-light"
-                  }`}>
-                  {m.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Nutrient focus */}
-          {(nutrientsData?.nutrients?.length ?? 0) > 0 && (
-            <>
-              <Text style={tw`text-sm font-semibold text-brown mb-2`}>
-                Focus on nutrient
-              </Text>
-              <View style={tw`flex-row flex-wrap gap-2 mb-6`}>
-                {nutrientsData?.nutrients?.map((n) => (
-                  <TouchableOpacity
-                    key={n.id}
-                    onPress={() =>
-                      setFocusNutrient(
-                        focusNutrient === n.name ? undefined : n.name,
-                      )
-                    }
-                    style={tw`rounded-full px-4 py-2 ${
-                      focusNutrient === n.name
-                        ? "bg-yellow"
-                        : "bg-white border border-cream-dark"
-                    }`}>
-                    <Text
-                      style={tw`text-sm ${
-                        focusNutrient === n.name
-                          ? "text-brown font-semibold"
-                          : "text-brown-light"
-                      }`}>
-                      {n.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
-          <TouchableOpacity
-            style={tw`bg-yellow rounded-full py-4 items-center`}
-            onPress={() => refetch()}>
-            <Text style={tw`text-brown font-semibold text-lg`}>
-              Generate Meals
-            </Text>
-          </TouchableOpacity>
-          <Text style={tw`text-brown-light text-xs text-center mt-3`}>
-            This usually takes 15-30 seconds
-          </Text>
-        </ScrollView>
-      )}
 
       {(isLoading || isFetching) && <LoadingAnimation />}
 

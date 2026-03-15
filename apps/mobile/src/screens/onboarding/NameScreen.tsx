@@ -99,9 +99,9 @@ export default function NameScreen({ navigation }: Props) {
       {process.env.NODE_ENV === "production" && (
         <View style={tw`mx-6 mt-24 bg-yellow rounded-xl px-4 py-3`}>
           <Text style={tw`text-brown text-sm text-center`}>
-            Sign in with username <Text style={tw`font-bold`}>tomas-demo</Text>{" "}
-            and password <Text style={tw`font-bold`}>password</Text> to test the
-            app
+            Sign in with username{" "}
+            <Text style={tw`font-bold`}>terence-demo</Text> and password{" "}
+            <Text style={tw`font-bold`}>password</Text> to test the app
           </Text>
         </View>
       )}

@@ -331,16 +331,14 @@ export async function suggestionsRoutes(app: FastifyInstance) {
           const recipeData = await fetchRecipeData(imageSearchTerm);
           return {
             ...meal,
-            // Prefer Spoonacular nutrition (accurate), fall back to AI estimates
             estimatedNutrition: recipeData.nutrition ?? meal.estimatedNutrition,
             imageUrl: recipeData.imageUrl,
-            // Prefer Spoonacular cuisine, fall back to AI classification
             cuisine: recipeData.cuisine || meal.cuisine,
           };
         }),
       );
 
-      // Cache the enriched result set
+      // Cache the result set
       await db.insert(mealCacheTable).values({
         userId: req.params.userId,
         contextHash,
