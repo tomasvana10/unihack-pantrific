@@ -212,8 +212,18 @@ function formatIngredients(
     .join("\n");
 }
 
+const MOOD_DESCRIPTIONS: Record<string, string> = {
+  energetic:
+    "Meals should be energising — rich in complex carbs, B-vitamins, and iron. Think vibrant, uplifting dishes.",
+  relaxed:
+    "Meals should be calming and comforting — include magnesium-rich foods, warm dishes, and soothing flavours.",
+  focused:
+    "Meals should support mental clarity — include omega-3 rich foods, antioxidants, and steady-energy ingredients.",
+};
+
 function buildSuggestionsPrompt(
   ctx: Awaited<ReturnType<typeof fetchUserContext>>,
+  preferences?: { focusNutrient?: string; mood?: string },
 ) {
   const { profile, deficiencies, nutrients, ingredients } = ctx;
   const dietType = profile?.dietType ?? "none";
@@ -229,6 +239,8 @@ ${profile ? `- Calorie target: ${profile.calorieTarget ?? "not set"} kcal/day\n-
 ${nutrients.length ? `\nTracked Nutrients:\n${nutrients.map((n) => `- ${n.name}: ${n.dailyTarget} ${n.unit}/day`).join("\n")}` : ""}
 ${dietType !== "none" ? `\nDiet restriction: ${dietType}.  All meals MUST be strictly ${dietType}.` : ""}
 ${cuisines.length ? `\nPreferred cuisines: ${cuisines.join(", ")} - favour these cuisine styles when possible.` : ""}
+${preferences?.focusNutrient ? `\nNutrient focus: The user wants meals that are especially high in ${preferences.focusNutrient}. Prioritise this nutrient in every suggestion.` : ""}
+${preferences?.mood ? `\nMood goal: ${MOOD_DESCRIPTIONS[preferences.mood] ?? `The user wants to feel ${preferences.mood}.`}` : ""}
 
 Deficiencies you must address:
 ${deficiencies.length ? deficiencies.map((d) => `- ${d.nutrient} (severity: ${d.severity ?? "unknown"})`).join("\n") : "None specified"}
@@ -246,12 +258,15 @@ ${dietType !== "none" ? `- Very important! Every meal must be 100% ${dietType}. 
 
 function computeContextHash(
   ctx: Awaited<ReturnType<typeof fetchUserContext>>,
+  preferences?: { focusNutrient?: string; mood?: string },
 ): string {
   const data = JSON.stringify({
     profile: ctx.profile,
     ingredients: ctx.ingredients,
     nutrients: ctx.nutrients,
     deficiencies: ctx.deficiencies,
+    focusNutrient: preferences?.focusNutrient,
+    mood: preferences?.mood,
   });
   return createHash("sha256").update(data).digest("hex").slice(0, 16);
 }
@@ -263,8 +278,13 @@ export async function suggestionsRoutes(app: FastifyInstance) {
     "/:userId",
     { schema: { params: userIdParamsSchema } },
     async (req) => {
+      const query = req.query as Record<string, string>;
+      const preferences = {
+        focusNutrient: query.focusNutrient || undefined,
+        mood: query.mood || undefined,
+      };
       const ctx = await fetchUserContext(req.params.userId);
-      const contextHash = computeContextHash(ctx);
+      const contextHash = computeContextHash(ctx, preferences);
 
       // Check meal suggestions cache (1 hour TTL, same context)
       const cutoff = new Date(Date.now() - CACHE_TTL_MS);
@@ -285,7 +305,7 @@ export async function suggestionsRoutes(app: FastifyInstance) {
       }
 
       // Generate with AI
-      const prompt = buildSuggestionsPrompt(ctx);
+      const prompt = buildSuggestionsPrompt(ctx, preferences);
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,

@@ -498,10 +498,24 @@ export function useLogMealNutrition(userId: string) {
 
 // ── Meal Suggestions ──
 
-export function useMealSuggestions(userId: string) {
+export function useMealSuggestions(
+  userId: string,
+  preferences?: { focusNutrient?: string; mood?: string },
+) {
+  const params = new URLSearchParams();
+  if (preferences?.focusNutrient)
+    params.set("focusNutrient", preferences.focusNutrient);
+  if (preferences?.mood) params.set("mood", preferences.mood);
+  const qs = params.toString();
   return useQuery({
-    queryKey: ["suggestions", userId],
-    queryFn: () => api<{ meals: MealType[] }>(`/suggestions/${userId}`),
+    queryKey: [
+      "suggestions",
+      userId,
+      preferences?.focusNutrient,
+      preferences?.mood,
+    ],
+    queryFn: () =>
+      api<{ meals: MealType[] }>(`/suggestions/${userId}${qs ? `?${qs}` : ""}`),
     enabled: false,
     staleTime: 30 * 60 * 1000,
   });
