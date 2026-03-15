@@ -35,7 +35,7 @@ const EMOJIS = [
   "🍝",
   "🍓",
 ];
-const EMOJI_SIZE = 36; // text-2xl (~24px) + mx-2 (8px each side) ≈ 36px per item
+const EMOJI_SIZE = 36;
 const MARQUEE_DURATION = 30000;
 
 function Marquee({ reverse }: { reverse?: boolean }) {

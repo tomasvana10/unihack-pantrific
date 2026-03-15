@@ -6,7 +6,7 @@ import {
   userIdParamsSchema,
 } from "@pantrific/schema";
 import { readFromEnv } from "@pantrific/shared/utils";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, inArray } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { db } from "../db";
@@ -146,7 +146,8 @@ async function fetchRecipeData(searchTerm: string): Promise<RecipeData> {
       .onConflictDoNothing();
 
     return result;
-  } catch {
+  } catch (err) {
+    console.error("Spoonacular lookup failed:", err);
     return { imageUrl: null, nutrition: null, cuisine: null };
   }
 }
@@ -168,15 +169,12 @@ async function fetchUserContext(userId: string) {
       .where(eq(trackedNutrientsTable.userId, userId)),
   ]);
 
-  const allItems = pantries.length
-    ? await Promise.all(
-        pantries.map((p) =>
-          db
-            .select()
-            .from(pantryItemTable)
-            .where(eq(pantryItemTable.pantryId, p.id)),
-        ),
-      ).then((results) => results.flat())
+  const pantryIds = pantries.map((p) => p.id);
+  const allItems = pantryIds.length
+    ? await db
+        .select()
+        .from(pantryItemTable)
+        .where(inArray(pantryItemTable.pantryId, pantryIds))
     : [];
 
   // Merge items across pantries, summing quantities for duplicates

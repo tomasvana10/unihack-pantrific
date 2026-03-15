@@ -1,3 +1,5 @@
+import type { MealSuggestion } from "@pantrific/schema";
+
 export type OnboardingStackParams = {
   Name: undefined;
   Login: undefined;
@@ -10,16 +12,7 @@ export type OnboardingStackParams = {
   Done: { userId: string };
 };
 
-export type MealType = {
-  name: string;
-  description: string;
-  ingredients: { name: string; amount: string }[];
-  steps: string[];
-  estimatedNutrition: Record<string, number>;
-  imageUrl: string | null;
-  cuisine: string | null;
-  benefits: string;
-};
+export type MealType = MealSuggestion;
 
 export type TabParams = {
   Pantries: { userId: string };

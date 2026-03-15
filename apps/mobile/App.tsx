@@ -21,6 +21,7 @@ import PasswordScreen from "./src/screens/onboarding/PasswordScreen";
 import QuickSetupScreen from "./src/screens/onboarding/QuickSetupScreen";
 import PantriesScreen from "./src/screens/PantriesScreen";
 import TrackingScreen from "./src/screens/TrackingScreen";
+import { colors } from "./src/theme";
 import tw from "./src/tw";
 import type {
   OnboardingStackParams,
@@ -64,14 +65,14 @@ function TabNavigator({ userId }: { userId: string }) {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#FFF8E1",
-          borderTopColor: "#FFF0B3",
+          backgroundColor: colors.cream,
+          borderTopColor: colors.creamDark,
           height: 70,
           paddingBottom: 10,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: "#3E2723",
-        tabBarInactiveTintColor: "#9E9E9E",
+        tabBarActiveTintColor: colors.brown,
+        tabBarInactiveTintColor: colors.gray,
         tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
       }}>
       <Tab.Screen
